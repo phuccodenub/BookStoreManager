@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.env
+.env.local
+coverage/
+uploads/
+temp/
+.npm-cache/
+.npm-cache-codex/
+.npm-cache-codex-escalated/
+%SystemDrive%/
+.DS_Store
+*.log
+prisma/dev.db
+PLAN.md
+bookstore_project_spec_agent.md
