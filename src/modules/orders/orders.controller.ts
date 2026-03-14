@@ -3,6 +3,7 @@ import * as svc from './orders.service.js';
 import { transitionOrder } from '../fulfillment/fulfillment.service.js';
 import { sendSuccess, sendCreated, buildPaginationMeta, param } from '../../shared/http/index.js';
 import { log as logActivity } from '../activity-logs/activity-logs.service.js';
+import { renderOrderPdf } from './orders.documents.js';
 
 function uid(req: Request) { return ((req as unknown as Record<string, unknown>)['user'] as { userId: string }).userId; }
 
@@ -55,6 +56,30 @@ export async function listAll(req: Request, res: Response, next: NextFunction) {
 export async function getById(req: Request, res: Response, next: NextFunction) {
   try { sendSuccess(res, await svc.getOrderById(param(req, 'id'))); } catch (e) { next(e); }
 }
+
+async function sendOrderDocument(
+  res: Response,
+  kind: 'invoice' | 'delivery-note',
+  orderId: string,
+) {
+  const order = await svc.getOrderById(orderId);
+  const pdf = await renderOrderPdf(order, kind);
+  const filePrefix = kind === 'invoice' ? 'invoice' : 'delivery-note';
+
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Length', pdf.length.toString());
+  res.setHeader('Content-Disposition', `attachment; filename="${filePrefix}-${order.orderCode}.pdf"`);
+  res.status(200).send(pdf);
+}
+
+export async function downloadInvoice(req: Request, res: Response, next: NextFunction) {
+  try { await sendOrderDocument(res, 'invoice', param(req, 'id')); } catch (e) { next(e); }
+}
+
+export async function downloadDeliveryNote(req: Request, res: Response, next: NextFunction) {
+  try { await sendOrderDocument(res, 'delivery-note', param(req, 'id')); } catch (e) { next(e); }
+}
+
 export async function updateStatus(req: Request, res: Response, next: NextFunction) {
   try {
     const id = param(req, 'id');

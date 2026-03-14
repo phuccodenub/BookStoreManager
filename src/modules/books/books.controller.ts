@@ -15,6 +15,13 @@ export async function getById(req: Request, res: Response, next: NextFunction) {
   try { sendSuccess(res, await svc.getById(param(req, 'id'))); } catch (e) { next(e); }
 }
 
+export async function related(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { limit } = req.query as unknown as { limit: number };
+    sendSuccess(res, await svc.listRelated(param(req, 'id'), limit));
+  } catch (e) { next(e); }
+}
+
 export async function create(req: Request, res: Response, next: NextFunction) {
   try { sendCreated(res, await svc.create(req.body)); } catch (e) { next(e); }
 }

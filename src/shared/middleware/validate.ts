@@ -20,10 +20,20 @@ export function validate(schemas: ValidateTarget) {
         req.body = schemas.body.parse(req.body);
       }
       if (schemas.query) {
-        (req as unknown as Record<string, unknown>)['query'] = schemas.query.parse(req.query);
+        Object.defineProperty(req, 'query', {
+          value: schemas.query.parse(req.query),
+          configurable: true,
+          enumerable: true,
+          writable: true,
+        });
       }
       if (schemas.params) {
-        (req as unknown as Record<string, unknown>)['params'] = schemas.params.parse(req.params);
+        Object.defineProperty(req, 'params', {
+          value: schemas.params.parse(req.params),
+          configurable: true,
+          enumerable: true,
+          writable: true,
+        });
       }
       next();
     } catch (err) {

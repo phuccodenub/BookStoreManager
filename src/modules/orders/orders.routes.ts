@@ -17,7 +17,9 @@ router.patch('/orders/me/:id/cancel', authenticate, validate({ params: orderIdPa
 
 /* Admin routes */
 router.get('/orders',                authenticate, authorize(Role.ADMIN, Role.STAFF), validate({ query: adminOrderQuerySchema }), ctrl.listAll);
-router.get('/orders/:id',           authenticate, authorize(Role.ADMIN, Role.STAFF), validate({ params: orderIdParam }), ctrl.getById);
-router.patch('/orders/:id/status',  authenticate, authorize(Role.ADMIN, Role.STAFF), validate({ params: orderIdParam, body: updateOrderStatusSchema }), ctrl.updateStatus);
+router.get('/orders/:id/invoice',    authenticate, authorize(Role.ADMIN, Role.STAFF), validate({ params: orderIdParam }), ctrl.downloadInvoice);
+router.get('/orders/:id/delivery-note', authenticate, authorize(Role.ADMIN, Role.STAFF), validate({ params: orderIdParam }), ctrl.downloadDeliveryNote);
+router.get('/orders/:id',            authenticate, authorize(Role.ADMIN, Role.STAFF), validate({ params: orderIdParam }), ctrl.getById);
+router.patch('/orders/:id/status',   authenticate, authorize(Role.ADMIN, Role.STAFF), validate({ params: orderIdParam, body: updateOrderStatusSchema }), ctrl.updateStatus);
 
 export default router;

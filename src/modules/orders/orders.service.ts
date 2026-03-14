@@ -7,8 +7,6 @@ import { calcDiscountTx } from '../vouchers/vouchers.service.js';
 import type { Prisma } from '@prisma/client';
 import crypto from 'node:crypto';
 
-const SHIPPING_FEE = env.DEFAULT_SHIPPING_FEE;
-
 function generateOrderCode(): string {
   const date = new Date();
   const ymd = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
@@ -22,6 +20,9 @@ export async function createOrder(userId: string, data: {
   const order = await prisma.$transaction(async (tx) => {
     const address = await tx.address.findFirst({ where: { id: data.addressId, userId } });
     if (!address) throw AppError.badRequest('Address not found');
+
+    const config = await tx.systemConfig.findUnique({ where: { id: 'default' } });
+    const shippingFee = Number(config?.shippingFee ?? env.DEFAULT_SHIPPING_FEE);
 
     const cart = await tx.cart.findUnique({ where: { userId }, include: { items: { include: { book: true } } } });
     if (!cart || cart.items.length === 0) throw AppError.badRequest('Cart is empty');
@@ -55,7 +56,7 @@ export async function createOrder(userId: string, data: {
       }
     }
 
-    const totalAmount = subtotal + SHIPPING_FEE - discountAmount;
+    const totalAmount = subtotal + shippingFee - discountAmount;
     const addressSnapshot = `${address.receiverName}, ${address.receiverPhone}, ${address.detailAddress}, ${address.ward}, ${address.district}, ${address.province}`;
 
     const order = await tx.order.create({
@@ -68,7 +69,7 @@ export async function createOrder(userId: string, data: {
         addressSnapshot,
         paymentMethod: data.paymentMethod,
         subtotal,
-        shippingFee: SHIPPING_FEE,
+        shippingFee,
         discountAmount,
         totalAmount,
         note: data.note ?? null,

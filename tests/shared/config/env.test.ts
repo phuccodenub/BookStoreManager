@@ -12,6 +12,7 @@ const baseEnv = {
   UPLOAD_DIR: 'uploads',
   DEFAULT_SHIPPING_FEE: '25000',
   LOW_STOCK_THRESHOLD: '5',
+  PAYMENT_WEBHOOK_SECRET: 'c'.repeat(32),
 };
 
 describe('shared config env', () => {
@@ -28,23 +29,25 @@ describe('shared config env', () => {
   });
 
   test('fails closed when PAYMENT_WEBHOOK_SECRET is missing outside tests', async () => {
-    const exitSpy = vi
-      .spyOn(process, 'exit')
-      .mockImplementation(((code?: number) => {
-        throw new Error(`process.exit:${code ?? 0}`);
-      }) as never);
+    const mod = await import('../../../src/shared/config/env.js');
 
-    await expect(import('../../../src/shared/config/env.js')).rejects.toThrow('process.exit:1');
-
-    expect(exitSpy).toHaveBeenCalledWith(1);
+    expect(() =>
+      mod.parseEnv({
+        ...baseEnv,
+        PAYMENT_WEBHOOK_SECRET: undefined,
+      } as never),
+    ).toThrow('PAYMENT_WEBHOOK_SECRET is required outside test environments');
   });
 
   test('allows PAYMENT_WEBHOOK_SECRET to be omitted in test mode', async () => {
-    process.env.NODE_ENV = 'test';
-
     const mod = await import('../../../src/shared/config/env.js');
 
-    expect(mod.env.NODE_ENV).toBe('test');
-    expect(mod.env.PAYMENT_WEBHOOK_SECRET).toBeUndefined();
+    expect(
+      mod.parseEnv({
+        ...baseEnv,
+        NODE_ENV: 'test',
+        PAYMENT_WEBHOOK_SECRET: undefined,
+      } as never).PAYMENT_WEBHOOK_SECRET,
+    ).toBeUndefined();
   });
 });

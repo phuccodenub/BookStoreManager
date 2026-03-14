@@ -19,6 +19,27 @@ Backend-only service for BookStoreManager, built with Express 5, TypeScript, Pri
 
 ## Local Database Setup
 
+If you want a quick local PostgreSQL without installing native binaries, use Docker Compose:
+
+```bash
+docker compose up -d postgres
+```
+
+To stop it:
+
+```bash
+docker compose down
+```
+
+If you want to reset local DB data completely:
+
+```bash
+docker compose down -v
+docker compose up -d postgres
+```
+
+Make sure your `.env` `DATABASE_URL` credentials match `docker-compose.yml` (`POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`).
+
 Create a dedicated local PostgreSQL database for the project:
 
 ```sql
@@ -95,6 +116,20 @@ After bootstrapping a clean database, verify:
 - Login with one of the seeded demo accounts
 - `POST /api/payments/webhook` with a wrong `x-webhook-secret` is rejected
 
+## Frontend Handoff
+
+A screen-to-endpoint mapping for the upcoming frontend lives at [`docs/frontend-handoff.md`](docs/frontend-handoff.md).
+
+Helpful frontend bootstrap endpoints:
+
+- `GET /api/home`
+- `GET /api/settings`
+- `GET /api/metadata/enums`
+- `GET /api/books/:id/related`
+- `GET /api/books/:bookId/reviews`
+- `GET /api/payments/:orderId`
+- `GET /api/orders/:id/invoice`
+- `GET /api/orders/:id/delivery-note`
 ## Validation Commands
 
 ```bash
@@ -181,3 +216,4 @@ Body:
 - Password change/reset revokes existing refresh tokens
 - Pending paid online orders cannot be cancelled by customers
 - Online orders cannot be completed before payment succeeds
+

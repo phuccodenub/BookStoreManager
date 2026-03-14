@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
@@ -48,6 +49,22 @@ async function main() {
     },
   });
 
+  /* ───────── System Config ───────── */
+  await prisma.systemConfig.upsert({
+    where: { id: 'default' },
+    update: {},
+    create: {
+      id: 'default',
+      storeName: 'BookStoreManager',
+      contactEmail: 'support@bookstore.com',
+      contactPhone: '0280000000',
+      contactAddress: '123 Nguyen Hue, District 1, Ho Chi Minh City',
+      shippingFee: 25000,
+      supportHours: '08:00 - 21:00 daily',
+      paymentProviderName: 'Mock Gateway',
+      paymentInstructions: 'Use COD or trigger the protected mock webhook for online payments.',
+    },
+  });
   /* ───────── Addresses ───────── */
   await prisma.address.upsert({
     where: { id: '00000000-0000-0000-0000-000000000001' },
@@ -66,7 +83,7 @@ async function main() {
   });
 
   /* ───────── Categories ───────── */
-  const categories = await Promise.all([
+  const categories = await prisma.$transaction([
     prisma.category.upsert({
       where: { slug: 'van-hoc' },
       update: {},
@@ -95,7 +112,7 @@ async function main() {
   ]);
 
   /* ───────── Sub-categories ───────── */
-  await Promise.all([
+  await prisma.$transaction([
     prisma.category.upsert({
       where: { slug: 'tieu-thuyet' },
       update: {},
@@ -109,7 +126,7 @@ async function main() {
   ]);
 
   /* ───────── Authors ───────── */
-  const authors = await Promise.all([
+  const authors = await prisma.$transaction([
     prisma.author.upsert({
       where: { id: '00000000-0000-0000-0000-000000000011' },
       update: {},
@@ -128,7 +145,7 @@ async function main() {
   ]);
 
   /* ───────── Publishers ───────── */
-  const publishers = await Promise.all([
+  const publishers = await prisma.$transaction([
     prisma.publisher.upsert({
       where: { id: '00000000-0000-0000-0000-000000000021' },
       update: {},
@@ -147,7 +164,7 @@ async function main() {
   ]);
 
   /* ───────── Books ───────── */
-  const books = await Promise.all([
+  const books = await prisma.$transaction([
     prisma.book.upsert({
       where: { slug: 'mat-biec' },
       update: {},
@@ -254,7 +271,7 @@ async function main() {
 
   /* ───────── Vouchers ───────── */
   const now = new Date();
-  await Promise.all([
+  await prisma.$transaction([
     prisma.voucher.upsert({
       where: { code: 'WELCOME10' },
       update: {},
@@ -285,7 +302,7 @@ async function main() {
   ]);
 
   /* ───────── Banners ───────── */
-  await Promise.all([
+  await prisma.$transaction([
     prisma.banner.upsert({
       where: { id: '00000000-0000-0000-0000-000000000031' },
       update: {},
@@ -338,6 +355,252 @@ async function main() {
     create: { userId: customer.id, bookId: books[3]!.id },
   });
 
+
+  /* ───────── Orders / Payments / Reviews / Contacts ───────── */
+  const addressSnapshot = 'Customer User, 0901000003, 123 Lê Lợi, Phường Bến Nghé, Quận 1, TP Hồ Chí Minh';
+
+  await prisma.order.upsert({
+    where: { orderCode: 'ORD-SEED-0001' },
+    update: {},
+    create: {
+      id: '00000000-0000-0000-0000-000000000041',
+      orderCode: 'ORD-SEED-0001',
+      userId: customer.id,
+      receiverName: 'Customer User',
+      receiverPhone: '0901000003',
+      addressSnapshot,
+      paymentMethod: 'cod',
+      paymentStatus: 'paid',
+      orderStatus: 'completed',
+      subtotal: 190000,
+      shippingFee: 25000,
+      discountAmount: 0,
+      totalAmount: 215000,
+      note: 'Completed seed order',
+    },
+  });
+
+  await prisma.order.upsert({
+    where: { orderCode: 'ORD-SEED-0002' },
+    update: {},
+    create: {
+      id: '00000000-0000-0000-0000-000000000042',
+      orderCode: 'ORD-SEED-0002',
+      userId: customer.id,
+      receiverName: 'Customer User',
+      receiverPhone: '0901000003',
+      addressSnapshot,
+      paymentMethod: 'online',
+      paymentStatus: 'paid',
+      orderStatus: 'shipping',
+      subtotal: 199000,
+      shippingFee: 25000,
+      discountAmount: 0,
+      totalAmount: 224000,
+      note: 'Shipping seed order',
+    },
+  });
+
+  await prisma.order.upsert({
+    where: { orderCode: 'ORD-SEED-0003' },
+    update: {},
+    create: {
+      id: '00000000-0000-0000-0000-000000000043',
+      orderCode: 'ORD-SEED-0003',
+      userId: customer.id,
+      receiverName: 'Customer User',
+      receiverPhone: '0901000003',
+      addressSnapshot,
+      paymentMethod: 'online',
+      paymentStatus: 'unpaid',
+      orderStatus: 'pending',
+      subtotal: 68000,
+      shippingFee: 25000,
+      discountAmount: 0,
+      totalAmount: 93000,
+      note: 'Pending seed order',
+    },
+  });
+
+  await prisma.order.upsert({
+    where: { orderCode: 'ORD-SEED-0004' },
+    update: {},
+    create: {
+      id: '00000000-0000-0000-0000-000000000044',
+      orderCode: 'ORD-SEED-0004',
+      userId: customer.id,
+      receiverName: 'Customer User',
+      receiverPhone: '0901000003',
+      addressSnapshot,
+      paymentMethod: 'cod',
+      paymentStatus: 'unpaid',
+      orderStatus: 'cancelled',
+      subtotal: 85000,
+      shippingFee: 25000,
+      discountAmount: 0,
+      totalAmount: 110000,
+      cancelledReason: 'Customer changed mind',
+      note: 'Cancelled seed order',
+    },
+  });
+
+  await prisma.$transaction([
+    prisma.orderItem.upsert({
+      where: { id: '00000000-0000-0000-0000-000000000051' },
+      update: {},
+      create: {
+        id: '00000000-0000-0000-0000-000000000051',
+        orderId: '00000000-0000-0000-0000-000000000041',
+        bookId: books[0]!.id,
+        bookNameSnapshot: books[0]!.title,
+        quantity: 2,
+        unitPrice: 95000,
+        totalPrice: 190000,
+      },
+    }),
+    prisma.orderItem.upsert({
+      where: { id: '00000000-0000-0000-0000-000000000052' },
+      update: {},
+      create: {
+        id: '00000000-0000-0000-0000-000000000052',
+        orderId: '00000000-0000-0000-0000-000000000042',
+        bookId: books[3]!.id,
+        bookNameSnapshot: books[3]!.title,
+        quantity: 1,
+        unitPrice: 199000,
+        totalPrice: 199000,
+      },
+    }),
+    prisma.orderItem.upsert({
+      where: { id: '00000000-0000-0000-0000-000000000053' },
+      update: {},
+      create: {
+        id: '00000000-0000-0000-0000-000000000053',
+        orderId: '00000000-0000-0000-0000-000000000043',
+        bookId: books[2]!.id,
+        bookNameSnapshot: books[2]!.title,
+        quantity: 1,
+        unitPrice: 68000,
+        totalPrice: 68000,
+      },
+    }),
+    prisma.orderItem.upsert({
+      where: { id: '00000000-0000-0000-0000-000000000054' },
+      update: {},
+      create: {
+        id: '00000000-0000-0000-0000-000000000054',
+        orderId: '00000000-0000-0000-0000-000000000044',
+        bookId: books[1]!.id,
+        bookNameSnapshot: books[1]!.title,
+        quantity: 1,
+        unitPrice: 85000,
+        totalPrice: 85000,
+      },
+    }),
+  ]);
+
+  await prisma.$transaction([
+    prisma.payment.upsert({
+      where: { orderId: '00000000-0000-0000-0000-000000000041' },
+      update: {},
+      create: {
+        id: '00000000-0000-0000-0000-000000000061',
+        orderId: '00000000-0000-0000-0000-000000000041',
+        provider: 'cod',
+        transactionCode: null,
+        amount: 215000,
+        status: 'paid',
+        paidAt: new Date(),
+      },
+    }),
+    prisma.payment.upsert({
+      where: { orderId: '00000000-0000-0000-0000-000000000042' },
+      update: {},
+      create: {
+        id: '00000000-0000-0000-0000-000000000062',
+        orderId: '00000000-0000-0000-0000-000000000042',
+        provider: 'mock_gateway',
+        transactionCode: 'TX-SEED-0002',
+        amount: 224000,
+        status: 'paid',
+        paidAt: new Date(),
+        rawResponse: { orderCode: 'ORD-SEED-0002', transactionCode: 'TX-SEED-0002', amount: 224000, status: 'paid' },
+      },
+    }),
+  ]);
+
+  await prisma.review.upsert({
+    where: { id: '00000000-0000-0000-0000-000000000101' },
+    update: {},
+    create: {
+      id: '00000000-0000-0000-0000-000000000101',
+      userId: customer.id,
+      bookId: books[0]!.id,
+      orderId: '00000000-0000-0000-0000-000000000041',
+      rating: 5,
+      comment: 'A great seed review for frontend demos.',
+    },
+  });
+
+  await prisma.contact.upsert({
+    where: { id: '00000000-0000-0000-0000-000000000111' },
+    update: {},
+    create: {
+      id: '00000000-0000-0000-0000-000000000111',
+      customerName: 'Frontend Demo Customer',
+      email: 'customer@bookstore.com',
+      phone: '0901000003',
+      subject: 'Shipping question',
+      content: 'Can I receive this order during office hours?',
+      status: 'in_progress',
+      assignedTo: staff.id,
+      note: 'Handled in seed data for admin/staff demo.',
+    },
+  });
+
+  await prisma.$transaction([
+    prisma.inventoryTransaction.upsert({
+      where: { id: '00000000-0000-0000-0000-000000000121' },
+      update: {},
+      create: {
+        id: '00000000-0000-0000-0000-000000000121',
+        bookId: books[4]!.id,
+        type: 'import',
+        quantity: 5,
+        unitCost: 250000,
+        note: 'Seed import transaction',
+        createdBy: admin.id,
+      },
+    }),
+    prisma.inventoryTransaction.upsert({
+      where: { id: '00000000-0000-0000-0000-000000000122' },
+      update: {},
+      create: {
+        id: '00000000-0000-0000-0000-000000000122',
+        bookId: books[3]!.id,
+        type: 'order_confirm',
+        quantity: -1,
+        referenceType: 'order',
+        referenceId: '00000000-0000-0000-0000-000000000042',
+        note: 'Seed order confirmation transaction',
+        createdBy: staff.id,
+      },
+    }),
+  ]);
+
+  await prisma.activityLog.upsert({
+    where: { id: '00000000-0000-0000-0000-000000000131' },
+    update: {},
+    create: {
+      id: '00000000-0000-0000-0000-000000000131',
+      userId: admin.id,
+      action: 'seed_order_status_reviewed',
+      entityType: 'order',
+      entityId: '00000000-0000-0000-0000-000000000042',
+      newData: { orderCode: 'ORD-SEED-0002', orderStatus: 'shipping', paymentStatus: 'paid' },
+      ipAddress: '127.0.0.1',
+    },
+  });
   console.log('✅ Seed completed');
   console.log('   Accounts: admin@bookstore.com / staff@bookstore.com / customer@bookstore.com');
   console.log('   Password: Password123!');
@@ -351,3 +614,4 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+

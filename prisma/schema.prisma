@@ -393,6 +393,23 @@ model InventoryTransaction {
   @@map("inventory_transactions")
 }
 
+// ─────────────────────────────── SETTINGS ───────────────────────────
+
+model SystemConfig {
+  id                  String   @id @default("default") @db.VarChar(40)
+  storeName           String   @map("store_name") @db.VarChar(200)
+  contactEmail        String?  @map("contact_email") @db.VarChar(255)
+  contactPhone        String?  @map("contact_phone") @db.VarChar(20)
+  contactAddress      String?  @map("contact_address") @db.VarChar(300)
+  shippingFee         Decimal  @default(25000) @map("shipping_fee") @db.Decimal(12, 0)
+  supportHours        String?  @map("support_hours") @db.VarChar(200)
+  paymentProviderName String?  @map("payment_provider_name") @db.VarChar(120)
+  paymentInstructions String?  @map("payment_instructions") @db.Text
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@map("system_configs")
+}
 // ─────────────────────────────── BANNERS ─────────────────────────────
 
 model Banner {
@@ -448,3 +465,4 @@ model ActivityLog {
   @@index([entityType, entityId])
   @@map("activity_logs")
 }
+

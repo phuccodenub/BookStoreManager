@@ -23,6 +23,10 @@ export const updateBookSchema = createBookSchema.partial();
 
 export const idParam = z.object({ id: z.string().uuid() });
 
+export const relatedQuery = z.object({
+  limit: z.coerce.number().int().positive().max(20).default(8),
+});
+
 export const listQuery = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().min(1).max(100).default(12),

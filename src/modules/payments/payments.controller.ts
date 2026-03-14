@@ -1,9 +1,20 @@
 import type { Request, Response, NextFunction } from 'express';
 import * as svc from './payments.service.js';
-import { sendSuccess } from '../../shared/http/index.js';
+import { sendSuccess, param } from '../../shared/http/index.js';
 import { env } from '../../shared/config/index.js';
 import { AppError } from '../../shared/errors/index.js';
 import { log as logActivity } from '../activity-logs/activity-logs.service.js';
+
+function authUser(req: Request) {
+  return ((req as unknown as Record<string, unknown>)['user'] as { userId: string; role: string });
+}
+
+export async function getByOrderId(req: Request, res: Response, next: NextFunction) {
+  try {
+    const payment = await svc.getPaymentByOrderId(param(req, 'orderId'), authUser(req));
+    sendSuccess(res, payment);
+  } catch (e) { next(e); }
+}
 
 export async function webhook(req: Request, res: Response, next: NextFunction) {
   try {

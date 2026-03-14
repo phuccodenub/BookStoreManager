@@ -30,6 +30,9 @@ import reviewsRoutes from './modules/reviews/reviews.routes.js';
 import contactsRoutes from './modules/contacts/contacts.routes.js';
 import reportsRoutes from './modules/reports/reports.routes.js';
 import activityLogsRoutes from './modules/activity-logs/activity-logs.routes.js';
+import settingsRoutes from './modules/settings/settings.routes.js';
+import metadataRoutes from './modules/metadata/metadata.routes.js';
+import homeRoutes from './modules/home/home.routes.js';
 
 export function createApp() {
   const app = express();
@@ -58,6 +61,9 @@ export function createApp() {
   /* ---------- API routes ---------- */
   app.use('/api', healthRoutes);
   app.use('/api', authRoutes);
+  app.use('/api', homeRoutes);
+  app.use('/api', metadataRoutes);
+  app.use('/api', settingsRoutes);
   app.use('/api', usersRoutes);
   app.use('/api', addressesRoutes);
   app.use('/api', categoriesRoutes);

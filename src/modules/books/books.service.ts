@@ -60,6 +60,34 @@ export async function getById(id: string) {
   return book;
 }
 
+export async function listRelated(id: string, limit: number) {
+  const current = await prisma.book.findUnique({ where: { id } });
+  if (!current) throw AppError.notFound('Book');
+
+  const related = await prisma.book.findMany({
+    where: {
+      id: { not: id },
+      status: 'active',
+      OR: [
+        current.categoryId ? { categoryId: current.categoryId } : undefined,
+        current.authorId ? { authorId: current.authorId } : undefined,
+      ].filter(Boolean) as Prisma.BookWhereInput[],
+    },
+    include,
+    orderBy: [{ soldQuantity: 'desc' }, { createdAt: 'desc' }],
+    take: limit,
+  });
+
+  if (related.length > 0) return related;
+
+  return prisma.book.findMany({
+    where: { id: { not: id }, status: 'active' },
+    include,
+    orderBy: [{ soldQuantity: 'desc' }, { createdAt: 'desc' }],
+    take: limit,
+  });
+}
+
 export async function getBySlug(slug: string) {
   const book = await prisma.book.findUnique({ where: { slug }, include });
   if (!book) throw AppError.notFound('Book');

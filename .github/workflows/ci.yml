@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-and-build:
+    runs-on: ubuntu-latest
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/book_store_manager?schema=public
+      JWT_ACCESS_SECRET: ci-access-secret-123456
+      JWT_REFRESH_SECRET: ci-refresh-secret-123456
+      JWT_ACCESS_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 7d
+      APP_BASE_URL: http://localhost:4000
+      UPLOAD_DIR: uploads
+      DEFAULT_SHIPPING_FEE: 25000
+      LOW_STOCK_THRESHOLD: 5
+      PAYMENT_WEBHOOK_SECRET: ci-webhook-secret-123456
+      DEBUG_LOG_RESET_TOKENS: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate Prisma schema
+        run: npx prisma validate
+
+      - name: Type-check
+        run: npm run lint:types
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build
+        run: npm run build

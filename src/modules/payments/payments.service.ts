@@ -2,6 +2,37 @@ import { prisma } from '../../shared/prisma/index.js';
 import { AppError } from '../../shared/errors/index.js';
 import { getIO } from '../../shared/socket/index.js';
 import type { Prisma } from '@prisma/client';
+import { Role } from '../../shared/constants/index.js';
+
+interface PaymentActor {
+  userId: string;
+  role: string;
+}
+
+export async function getPaymentByOrderId(orderId: string, actor: PaymentActor) {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: {
+      payment: true,
+    },
+  });
+
+  if (!order) throw AppError.notFound('Order');
+
+  const canViewAllPayments = actor.role === Role.ADMIN || actor.role === Role.STAFF;
+  if (!canViewAllPayments && order.userId !== actor.userId) {
+    throw AppError.forbidden('Cannot view payment for this order');
+  }
+
+  return {
+    orderId: order.id,
+    orderCode: order.orderCode,
+    paymentMethod: order.paymentMethod,
+    paymentStatus: order.paymentStatus,
+    totalAmount: order.totalAmount,
+    payment: order.payment,
+  };
+}
 
 export async function handleWebhook(data: {
   orderCode: string;

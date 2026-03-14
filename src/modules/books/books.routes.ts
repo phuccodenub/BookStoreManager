@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { authenticate, authorize, validate, optionalAuth } from '../../shared/middleware/index.js';
 import { Role } from '../../shared/constants/index.js';
 import { upload } from '../../shared/storage/index.js';
-import { createBookSchema, updateBookSchema, idParam, listQuery } from './books.validation.js';
+import { createBookSchema, updateBookSchema, idParam, listQuery, relatedQuery } from './books.validation.js';
 import * as ctrl from './books.controller.js';
 import { z } from 'zod';
 
@@ -12,6 +12,7 @@ const imageIdParam = z.object({ id: z.string().uuid(), imageId: z.string().uuid(
 /* Public */
 router.get('/books',      optionalAuth, validate({ query: listQuery }), ctrl.list);
 router.get('/books/:id',  optionalAuth, validate({ params: idParam }), ctrl.getById);
+router.get('/books/:id/related', optionalAuth, validate({ params: idParam, query: relatedQuery }), ctrl.related);
 
 /* Admin */
 router.post('/books',     authenticate, authorize(Role.ADMIN), validate({ body: createBookSchema }), ctrl.create);
