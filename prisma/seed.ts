@@ -52,17 +52,26 @@ async function main() {
   /* ───────── System Config ───────── */
   await prisma.systemConfig.upsert({
     where: { id: 'default' },
-    update: {},
+    update: {
+      storeName: 'MMT Hiệu Sách',
+      contactEmail: 'hotro@mmtbookstore.local',
+      contactPhone: '02854452222',
+      contactAddress: 'Hiệp Phú, Thủ Đức, TP. Hồ Chí Minh',
+      shippingFee: 25000,
+      supportHours: '08:00 - 21:00 mỗi ngày',
+      paymentProviderName: 'Thanh toán trực tuyến',
+      paymentInstructions: 'Sau khi đặt hàng, vui lòng làm theo hướng dẫn thanh toán trong đơn để cửa hàng xác nhận nhanh hơn.',
+    },
     create: {
       id: 'default',
-      storeName: 'BookStoreManager',
-      contactEmail: 'support@bookstore.com',
-      contactPhone: '0280000000',
-      contactAddress: '123 Nguyen Hue, District 1, Ho Chi Minh City',
+      storeName: 'MMT Hiệu Sách',
+      contactEmail: 'hotro@mmtbookstore.local',
+      contactPhone: '02854452222',
+      contactAddress: 'Hiệp Phú, Thủ Đức, TP. Hồ Chí Minh',
       shippingFee: 25000,
-      supportHours: '08:00 - 21:00 daily',
-      paymentProviderName: 'Mock Gateway',
-      paymentInstructions: 'Use COD or trigger the protected mock webhook for online payments.',
+      supportHours: '08:00 - 21:00 mỗi ngày',
+      paymentProviderName: 'Thanh toán trực tuyến',
+      paymentInstructions: 'Sau khi đặt hàng, vui lòng làm theo hướng dẫn thanh toán trong đơn để cửa hàng xác nhận nhanh hơn.',
     },
   });
   /* ───────── Addresses ───────── */
@@ -129,18 +138,23 @@ async function main() {
   const authors = await prisma.$transaction([
     prisma.author.upsert({
       where: { id: '00000000-0000-0000-0000-000000000011' },
-      update: {},
+      update: { name: 'Nguyễn Nhật Ánh', bio: 'Nhà văn nổi tiếng với các tác phẩm thiếu nhi' },
       create: { id: '00000000-0000-0000-0000-000000000011', name: 'Nguyễn Nhật Ánh', bio: 'Nhà văn nổi tiếng với các tác phẩm thiếu nhi' },
     }),
     prisma.author.upsert({
       where: { id: '00000000-0000-0000-0000-000000000012' },
-      update: {},
+      update: { name: 'Dale Carnegie', bio: 'Tác giả sách kỹ năng sống nổi tiếng thế giới' },
       create: { id: '00000000-0000-0000-0000-000000000012', name: 'Dale Carnegie', bio: 'Tác giả sách kỹ năng sống nổi tiếng thế giới' },
     }),
     prisma.author.upsert({
       where: { id: '00000000-0000-0000-0000-000000000013' },
-      update: {},
+      update: { name: 'Yuval Noah Harari', bio: 'Sử gia và tác giả sách khoa học phổ thông' },
       create: { id: '00000000-0000-0000-0000-000000000013', name: 'Yuval Noah Harari', bio: 'Sử gia và tác giả sách khoa học phổ thông' },
+    }),
+    prisma.author.upsert({
+      where: { id: '00000000-0000-0000-0000-000000000014' },
+      update: { name: 'Robert C. Martin', bio: 'Tác giả nổi tiếng với các cuốn sách về viết mã sạch và tư duy phát triển phần mềm.' },
+      create: { id: '00000000-0000-0000-0000-000000000014', name: 'Robert C. Martin', bio: 'Tác giả nổi tiếng với các cuốn sách về viết mã sạch và tư duy phát triển phần mềm.' },
     }),
   ]);
 
@@ -148,18 +162,23 @@ async function main() {
   const publishers = await prisma.$transaction([
     prisma.publisher.upsert({
       where: { id: '00000000-0000-0000-0000-000000000021' },
-      update: {},
-      create: { id: '00000000-0000-0000-0000-000000000021', name: 'NXB Trẻ', address: 'TP HCM', phone: '02838225340', email: 'info@nxbtre.com.vn' },
+      update: { name: 'NXB Trẻ', address: 'TP. Hồ Chí Minh', phone: '02838225340', email: 'info@nxbtre.com.vn' },
+      create: { id: '00000000-0000-0000-0000-000000000021', name: 'NXB Trẻ', address: 'TP. Hồ Chí Minh', phone: '02838225340', email: 'info@nxbtre.com.vn' },
     }),
     prisma.publisher.upsert({
       where: { id: '00000000-0000-0000-0000-000000000022' },
-      update: {},
+      update: { name: 'NXB Kim Đồng', address: 'Hà Nội', phone: '02439434730', email: 'info@nxbkimdong.com.vn' },
       create: { id: '00000000-0000-0000-0000-000000000022', name: 'NXB Kim Đồng', address: 'Hà Nội', phone: '02439434730', email: 'info@nxbkimdong.com.vn' },
     }),
     prisma.publisher.upsert({
       where: { id: '00000000-0000-0000-0000-000000000023' },
-      update: {},
-      create: { id: '00000000-0000-0000-0000-000000000023', name: 'NXB Tổng hợp TP HCM', address: 'TP HCM' },
+      update: { name: 'NXB Tổng hợp TP. Hồ Chí Minh', address: 'TP. Hồ Chí Minh' },
+      create: { id: '00000000-0000-0000-0000-000000000023', name: 'NXB Tổng hợp TP. Hồ Chí Minh', address: 'TP. Hồ Chí Minh' },
+    }),
+    prisma.publisher.upsert({
+      where: { id: '00000000-0000-0000-0000-000000000024' },
+      update: { name: 'Prentice Hall', address: 'Boston, USA' },
+      create: { id: '00000000-0000-0000-0000-000000000024', name: 'Prentice Hall', address: 'Boston, USA' },
     }),
   ]);
 
@@ -167,7 +186,24 @@ async function main() {
   const books = await prisma.$transaction([
     prisma.book.upsert({
       where: { slug: 'mat-biec' },
-      update: {},
+      update: {
+        title: 'Mắt Biếc',
+        isbn: '9786041099074',
+        description: 'Tiểu thuyết nổi tiếng của Nguyễn Nhật Ánh',
+        price: 95000,
+        importPrice: 60000,
+        stockQuantity: 100,
+        soldQuantity: 350,
+        categoryId: categories[0]!.id,
+        authorId: authors[0]!.id,
+        publisherId: publishers[0]!.id,
+        status: 'active',
+        isFeatured: true,
+        isNew: false,
+        isBestSeller: true,
+        pageCount: 200,
+        publicationYear: 2019,
+      },
       create: {
         title: 'Mắt Biếc',
         slug: 'mat-biec',
@@ -180,7 +216,9 @@ async function main() {
         categoryId: categories[0]!.id,
         authorId: authors[0]!.id,
         publisherId: publishers[0]!.id,
+        status: 'active',
         isFeatured: true,
+        isNew: false,
         isBestSeller: true,
         pageCount: 200,
         publicationYear: 2019,
@@ -188,7 +226,24 @@ async function main() {
     }),
     prisma.book.upsert({
       where: { slug: 'toi-thay-hoa-vang-tren-co-xanh' },
-      update: {},
+      update: {
+        title: 'Tôi Thấy Hoa Vàng Trên Cỏ Xanh',
+        isbn: '9786041025301',
+        description: 'Câu chuyện tuổi thơ đồng quê xúc động',
+        price: 85000,
+        importPrice: 55000,
+        stockQuantity: 80,
+        soldQuantity: 280,
+        categoryId: categories[0]!.id,
+        authorId: authors[0]!.id,
+        publisherId: publishers[0]!.id,
+        status: 'active',
+        isFeatured: true,
+        isNew: true,
+        isBestSeller: false,
+        pageCount: 378,
+        publicationYear: 2020,
+      },
       create: {
         title: 'Tôi Thấy Hoa Vàng Trên Cỏ Xanh',
         slug: 'toi-thay-hoa-vang-tren-co-xanh',
@@ -201,15 +256,34 @@ async function main() {
         categoryId: categories[0]!.id,
         authorId: authors[0]!.id,
         publisherId: publishers[0]!.id,
+        status: 'active',
         isFeatured: true,
         isNew: true,
+        isBestSeller: false,
         pageCount: 378,
         publicationYear: 2020,
       },
     }),
     prisma.book.upsert({
       where: { slug: 'dac-nhan-tam' },
-      update: {},
+      update: {
+        title: 'Đắc Nhân Tâm',
+        isbn: '9786045890363',
+        description: 'Cuốn sách kinh điển về kỹ năng giao tiếp',
+        price: 68000,
+        importPrice: 40000,
+        stockQuantity: 150,
+        soldQuantity: 500,
+        categoryId: categories[1]!.id,
+        authorId: authors[1]!.id,
+        publisherId: publishers[2]!.id,
+        status: 'active',
+        isFeatured: false,
+        isNew: false,
+        isBestSeller: true,
+        pageCount: 320,
+        publicationYear: 2016,
+      },
       create: {
         title: 'Đắc Nhân Tâm',
         slug: 'dac-nhan-tam',
@@ -222,6 +296,9 @@ async function main() {
         categoryId: categories[1]!.id,
         authorId: authors[1]!.id,
         publisherId: publishers[2]!.id,
+        status: 'active',
+        isFeatured: false,
+        isNew: false,
         isBestSeller: true,
         pageCount: 320,
         publicationYear: 2016,
@@ -229,7 +306,24 @@ async function main() {
     }),
     prisma.book.upsert({
       where: { slug: 'sapiens-luoc-su-loai-nguoi' },
-      update: {},
+      update: {
+        title: 'Sapiens: Lược Sử Loài Người',
+        isbn: '9786045871867',
+        description: 'Khám phá hành trình phát triển của loài người',
+        price: 199000,
+        importPrice: 130000,
+        stockQuantity: 60,
+        soldQuantity: 120,
+        categoryId: categories[2]!.id,
+        authorId: authors[2]!.id,
+        publisherId: publishers[2]!.id,
+        status: 'active',
+        isFeatured: true,
+        isNew: true,
+        isBestSeller: false,
+        pageCount: 550,
+        publicationYear: 2022,
+      },
       create: {
         title: 'Sapiens: Lược Sử Loài Người',
         slug: 'sapiens-luoc-su-loai-nguoi',
@@ -242,26 +336,43 @@ async function main() {
         categoryId: categories[2]!.id,
         authorId: authors[2]!.id,
         publisherId: publishers[2]!.id,
-        isNew: true,
+        status: 'active',
         isFeatured: true,
+        isNew: true,
+        isBestSeller: false,
         pageCount: 550,
         publicationYear: 2022,
       },
     }),
     prisma.book.upsert({
       where: { slug: 'clean-code' },
-      update: {},
-      create: {
+      update: {
         title: 'Clean Code',
-        slug: 'clean-code',
         isbn: '9780132350884',
-        description: 'A Handbook of Agile Software Craftsmanship',
+        description: 'Cuốn sách kinh điển về kỹ năng viết mã sạch và tư duy phát triển phần mềm bền vững.',
         price: 350000,
         importPrice: 250000,
         stockQuantity: 4,
         soldQuantity: 45,
         categoryId: categories[3]!.id,
-        publisherId: publishers[2]!.id,
+        authorId: authors[3]!.id,
+        publisherId: publishers[3]!.id,
+        status: 'active',
+        pageCount: 464,
+        publicationYear: 2008,
+      },
+      create: {
+        title: 'Clean Code',
+        slug: 'clean-code',
+        isbn: '9780132350884',
+        description: 'Cuốn sách kinh điển về kỹ năng viết mã sạch và tư duy phát triển phần mềm bền vững.',
+        price: 350000,
+        importPrice: 250000,
+        stockQuantity: 4,
+        soldQuantity: 45,
+        categoryId: categories[3]!.id,
+        authorId: authors[3]!.id,
+        publisherId: publishers[3]!.id,
         status: 'active',
         pageCount: 464,
         publicationYear: 2008,
@@ -305,24 +416,36 @@ async function main() {
   await prisma.$transaction([
     prisma.banner.upsert({
       where: { id: '00000000-0000-0000-0000-000000000031' },
-      update: {},
+      update: {
+        title: 'Sách mới tháng 3',
+        image: 'banners/banner-1.jpg',
+        link: '/catalog?isNew=true',
+        status: true,
+        sortOrder: 1,
+      },
       create: {
         id: '00000000-0000-0000-0000-000000000031',
         title: 'Sách mới tháng 3',
         image: 'banners/banner-1.jpg',
-        link: '/books?is_new=true',
+        link: '/catalog?isNew=true',
         status: true,
         sortOrder: 1,
       },
     }),
     prisma.banner.upsert({
       where: { id: '00000000-0000-0000-0000-000000000032' },
-      update: {},
+      update: {
+        title: 'Những tựa sách bán chạy được yêu thích',
+        image: 'banners/banner-2.jpg',
+        link: '/catalog?isBestSeller=true',
+        status: true,
+        sortOrder: 2,
+      },
       create: {
         id: '00000000-0000-0000-0000-000000000032',
-        title: 'Giảm giá sách best-seller',
+        title: 'Những tựa sách bán chạy được yêu thích',
         image: 'banners/banner-2.jpg',
-        link: '/books?is_best_seller=true',
+        link: '/catalog?isBestSeller=true',
         status: true,
         sortOrder: 2,
       },
@@ -361,7 +484,9 @@ async function main() {
 
   await prisma.order.upsert({
     where: { orderCode: 'ORD-SEED-0001' },
-    update: {},
+    update: {
+      note: 'Đơn mẫu đã hoàn tất',
+    },
     create: {
       id: '00000000-0000-0000-0000-000000000041',
       orderCode: 'ORD-SEED-0001',
@@ -376,13 +501,15 @@ async function main() {
       shippingFee: 25000,
       discountAmount: 0,
       totalAmount: 215000,
-      note: 'Completed seed order',
+      note: 'Đơn mẫu đã hoàn tất',
     },
   });
 
   await prisma.order.upsert({
     where: { orderCode: 'ORD-SEED-0002' },
-    update: {},
+    update: {
+      note: 'Đơn mẫu đang được giao',
+    },
     create: {
       id: '00000000-0000-0000-0000-000000000042',
       orderCode: 'ORD-SEED-0002',
@@ -397,13 +524,15 @@ async function main() {
       shippingFee: 25000,
       discountAmount: 0,
       totalAmount: 224000,
-      note: 'Shipping seed order',
+      note: 'Đơn mẫu đang được giao',
     },
   });
 
   await prisma.order.upsert({
     where: { orderCode: 'ORD-SEED-0003' },
-    update: {},
+    update: {
+      note: 'Đơn mẫu đang chờ xác nhận',
+    },
     create: {
       id: '00000000-0000-0000-0000-000000000043',
       orderCode: 'ORD-SEED-0003',
@@ -418,13 +547,16 @@ async function main() {
       shippingFee: 25000,
       discountAmount: 0,
       totalAmount: 93000,
-      note: 'Pending seed order',
+      note: 'Đơn mẫu đang chờ xác nhận',
     },
   });
 
   await prisma.order.upsert({
     where: { orderCode: 'ORD-SEED-0004' },
-    update: {},
+    update: {
+      cancelledReason: 'Khách hàng thay đổi kế hoạch nhận hàng',
+      note: 'Đơn mẫu đã hủy',
+    },
     create: {
       id: '00000000-0000-0000-0000-000000000044',
       orderCode: 'ORD-SEED-0004',
@@ -439,8 +571,8 @@ async function main() {
       shippingFee: 25000,
       discountAmount: 0,
       totalAmount: 110000,
-      cancelledReason: 'Customer changed mind',
-      note: 'Cancelled seed order',
+      cancelledReason: 'Khách hàng thay đổi kế hoạch nhận hàng',
+      note: 'Đơn mẫu đã hủy',
     },
   });
 
@@ -502,11 +634,16 @@ async function main() {
   await prisma.$transaction([
     prisma.payment.upsert({
       where: { orderId: '00000000-0000-0000-0000-000000000041' },
-      update: {},
+      update: {
+        provider: 'Thanh toán khi nhận hàng',
+        amount: 215000,
+        status: 'paid',
+        paidAt: new Date(),
+      },
       create: {
         id: '00000000-0000-0000-0000-000000000061',
         orderId: '00000000-0000-0000-0000-000000000041',
-        provider: 'cod',
+        provider: 'Thanh toán khi nhận hàng',
         transactionCode: null,
         amount: 215000,
         status: 'paid',
@@ -515,11 +652,18 @@ async function main() {
     }),
     prisma.payment.upsert({
       where: { orderId: '00000000-0000-0000-0000-000000000042' },
-      update: {},
+      update: {
+        provider: 'Thanh toán trực tuyến',
+        transactionCode: 'TX-SEED-0002',
+        amount: 224000,
+        status: 'paid',
+        paidAt: new Date(),
+        rawResponse: { orderCode: 'ORD-SEED-0002', transactionCode: 'TX-SEED-0002', amount: 224000, status: 'paid' },
+      },
       create: {
         id: '00000000-0000-0000-0000-000000000062',
         orderId: '00000000-0000-0000-0000-000000000042',
-        provider: 'mock_gateway',
+        provider: 'Thanh toán trực tuyến',
         transactionCode: 'TX-SEED-0002',
         amount: 224000,
         status: 'paid',
@@ -531,50 +675,66 @@ async function main() {
 
   await prisma.review.upsert({
     where: { id: '00000000-0000-0000-0000-000000000101' },
-    update: {},
+    update: {
+      rating: 5,
+      comment: 'Một câu chuyện giàu cảm xúc, rất dễ đọc và đáng để quay lại nhiều lần.',
+    },
     create: {
       id: '00000000-0000-0000-0000-000000000101',
       userId: customer.id,
       bookId: books[0]!.id,
       orderId: '00000000-0000-0000-0000-000000000041',
       rating: 5,
-      comment: 'A great seed review for frontend demos.',
+      comment: 'Một câu chuyện giàu cảm xúc, rất dễ đọc và đáng để quay lại nhiều lần.',
     },
   });
 
   await prisma.contact.upsert({
     where: { id: '00000000-0000-0000-0000-000000000111' },
-    update: {},
-    create: {
-      id: '00000000-0000-0000-0000-000000000111',
-      customerName: 'Frontend Demo Customer',
+    update: {
+      customerName: 'Khách hàng mẫu',
       email: 'customer@bookstore.com',
       phone: '0901000003',
-      subject: 'Shipping question',
-      content: 'Can I receive this order during office hours?',
+      subject: 'Cần hỗ trợ thời gian giao hàng',
+      content: 'Tôi muốn biết cửa hàng có thể giao đơn này trong giờ hành chính hay không.',
       status: 'in_progress',
       assignedTo: staff.id,
-      note: 'Handled in seed data for admin/staff demo.',
+      note: 'Yêu cầu mẫu để hiển thị trong giao diện quản trị.',
+    },
+    create: {
+      id: '00000000-0000-0000-0000-000000000111',
+      customerName: 'Khách hàng mẫu',
+      email: 'customer@bookstore.com',
+      phone: '0901000003',
+      subject: 'Cần hỗ trợ thời gian giao hàng',
+      content: 'Tôi muốn biết cửa hàng có thể giao đơn này trong giờ hành chính hay không.',
+      status: 'in_progress',
+      assignedTo: staff.id,
+      note: 'Yêu cầu mẫu để hiển thị trong giao diện quản trị.',
     },
   });
 
   await prisma.$transaction([
     prisma.inventoryTransaction.upsert({
       where: { id: '00000000-0000-0000-0000-000000000121' },
-      update: {},
+      update: {
+        note: 'Bản ghi nhập kho mẫu cho khu vực vận hành.',
+      },
       create: {
         id: '00000000-0000-0000-0000-000000000121',
         bookId: books[4]!.id,
         type: 'import',
         quantity: 5,
         unitCost: 250000,
-        note: 'Seed import transaction',
+        note: 'Bản ghi nhập kho mẫu cho khu vực vận hành.',
         createdBy: admin.id,
       },
     }),
     prisma.inventoryTransaction.upsert({
       where: { id: '00000000-0000-0000-0000-000000000122' },
-      update: {},
+      update: {
+        note: 'Bản ghi giữ hàng mẫu sau khi xác nhận đơn.',
+      },
       create: {
         id: '00000000-0000-0000-0000-000000000122',
         bookId: books[3]!.id,
@@ -582,11 +742,24 @@ async function main() {
         quantity: -1,
         referenceType: 'order',
         referenceId: '00000000-0000-0000-0000-000000000042',
-        note: 'Seed order confirmation transaction',
+        note: 'Bản ghi giữ hàng mẫu sau khi xác nhận đơn.',
         createdBy: staff.id,
       },
     }),
   ]);
+
+  await prisma.contact.updateMany({
+    where: {
+      customerName: 'Frontend Demo Customer',
+      subject: 'Question about shipping windows',
+    },
+    data: {
+      customerName: 'Khách hàng storefront',
+      subject: 'Cần tư vấn thời gian giao hàng',
+      content: 'Tôi muốn xác nhận cửa hàng có thể giao đơn trong khung giờ nào để tiện sắp xếp nhận hàng.',
+      note: 'Yêu cầu demo đã được chuẩn hóa lại cho giao diện vận hành.',
+    },
+  });
 
   await prisma.activityLog.upsert({
     where: { id: '00000000-0000-0000-0000-000000000131' },
@@ -614,4 +787,5 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+
 
