@@ -23,7 +23,7 @@ export async function create(req: Request, res: Response, next: NextFunction) {
 }
 export async function listMine(req: Request, res: Response, next: NextFunction) {
   try {
-    const q = req.query as unknown as { page: number; limit: number; status?: string };
+    const q = req.query as unknown as Parameters<typeof svc.listMyOrders>[1];
     const { items, total, page, limit } = await svc.listMyOrders(uid(req), q);
     sendSuccess(res, items, buildPaginationMeta(page, limit, total));
   } catch (e) { next(e); }
@@ -48,7 +48,7 @@ export async function cancelMine(req: Request, res: Response, next: NextFunction
 
 export async function listAll(req: Request, res: Response, next: NextFunction) {
   try {
-    const q = req.query as unknown as { page: number; limit: number; status?: string; search?: string; userId?: string };
+    const q = req.query as unknown as Parameters<typeof svc.listAll>[0];
     const { items, total, page, limit } = await svc.listAll(q);
     sendSuccess(res, items, buildPaginationMeta(page, limit, total));
   } catch (e) { next(e); }
