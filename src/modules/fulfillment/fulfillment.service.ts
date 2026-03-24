@@ -18,7 +18,7 @@ export async function transitionOrder(
 
     const allowed = ORDER_STATUS_TRANSITIONS[order.orderStatus] || [];
     if (!allowed.includes(newStatus)) {
-      throw AppError.badRequest(`Cannot transition from ${order.orderStatus} to ${newStatus}`);
+      throw AppError.badRequest(`Không thể chuyển đơn từ trạng thái ${order.orderStatus} sang ${newStatus}`);
     }
 
     if (newStatus === 'confirmed') {
@@ -32,7 +32,7 @@ export async function transitionOrder(
         });
         if (affectedRows.count === 0) {
           const book = await tx.book.findUnique({ where: { id: item.bookId } });
-          throw AppError.badRequest(`Not enough stock for book "${item.bookNameSnapshot}" (available: ${book?.stockQuantity ?? 0}, needed: ${item.quantity})`);
+          throw AppError.badRequest(`Sách "${item.bookNameSnapshot}" không đủ tồn kho (còn ${book?.stockQuantity ?? 0}, cần ${item.quantity})`);
         }
         await tx.inventoryTransaction.create({
           data: {
@@ -41,7 +41,7 @@ export async function transitionOrder(
             quantity: -item.quantity,
             referenceType: 'order',
             referenceId: order.id,
-            note: `Order ${order.orderCode} confirmed`,
+            note: `Đơn ${order.orderCode} đã được xác nhận và giữ tồn kho.`,
             createdBy: staffId,
           },
         });
@@ -58,7 +58,7 @@ export async function transitionOrder(
           },
         });
         if (affectedRows.count === 0) {
-          throw AppError.badRequest(`Cannot restore inventory for "${item.bookNameSnapshot}" due to inconsistent sold quantity`);
+          throw AppError.badRequest(`Không thể hoàn tồn cho "${item.bookNameSnapshot}" vì dữ liệu số lượng đã bán không còn khớp`);
         }
         await tx.inventoryTransaction.create({
           data: {
@@ -67,7 +67,7 @@ export async function transitionOrder(
             quantity: item.quantity,
             referenceType: 'order',
             referenceId: order.id,
-            note: `Order ${order.orderCode} cancelled – stock restored`,
+            note: `Đơn ${order.orderCode} đã hủy và số lượng tồn kho đã được hoàn lại.`,
             createdBy: staffId,
           },
         });
@@ -75,7 +75,7 @@ export async function transitionOrder(
     }
 
     if (newStatus === 'completed' && order.paymentMethod === 'online' && order.paymentStatus !== 'paid') {
-      throw AppError.badRequest('Online orders can only be completed after payment succeeds');
+      throw AppError.badRequest('Đơn thanh toán trực tuyến chỉ có thể hoàn tất sau khi thanh toán thành công');
     }
 
     let paymentUpdate = {};
@@ -110,7 +110,7 @@ export async function transitionOrder(
     });
 
     if (updatedOrder.count === 0) {
-      throw AppError.badRequest('Order status changed, please retry');
+      throw AppError.badRequest('Trạng thái đơn hàng đã thay đổi, vui lòng thử lại');
     }
 
     const updated = await tx.order.findUniqueOrThrow({

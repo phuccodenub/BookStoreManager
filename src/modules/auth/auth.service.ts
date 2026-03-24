@@ -39,11 +39,6 @@ function parseDuration(val: string): number {
   }
 }
 
-function maskToken(token: string): string {
-  if (token.length <= 8) return '***';
-  return `${token.slice(0, 4)}...${token.slice(-4)}`;
-}
-
 export async function register(input: RegisterInput) {
   const email = input.email.toLowerCase();
   const exists = await prisma.user.findUnique({ where: { email } });
@@ -87,31 +82,38 @@ export async function login(input: LoginInput) {
 
 export async function refresh(rawRefreshToken: string) {
   const tokenHash = hashToken(rawRefreshToken);
-  const stored = await prisma.refreshToken.findFirst({
-    where: { tokenHash },
-    include: { user: true },
+  return prisma.$transaction(async (tx) => {
+    const stored = await tx.refreshToken.findFirst({
+      where: { tokenHash },
+      include: { user: true },
+    });
+
+    if (!stored || stored.expiresAt < new Date()) {
+      if (stored) await tx.refreshToken.deleteMany({ where: { id: stored.id } });
+      throw AppError.unauthorized('Invalid or expired refresh token');
+    }
+
+    if (stored.user.status === 'locked') {
+      await tx.refreshToken.deleteMany({ where: { id: stored.id, tokenHash } });
+      throw AppError.forbidden('Account is locked');
+    }
+
+    const deleted = await tx.refreshToken.deleteMany({
+      where: { id: stored.id, tokenHash },
+    });
+    if (deleted.count === 0) {
+      throw AppError.unauthorized('Invalid or expired refresh token');
+    }
+
+    const accessToken = signAccess(stored.user.id, stored.user.role);
+    const newRefresh = signRefresh();
+
+    await tx.refreshToken.create({
+      data: { userId: stored.user.id, tokenHash: newRefresh.hash, expiresAt: newRefresh.expiresAt },
+    });
+
+    return { accessToken, refreshToken: newRefresh.raw };
   });
-
-  if (!stored || stored.expiresAt < new Date()) {
-    if (stored) await prisma.refreshToken.delete({ where: { id: stored.id } });
-    throw AppError.unauthorized('Invalid or expired refresh token');
-  }
-
-  if (stored.user.status === 'locked') {
-    await prisma.refreshToken.delete({ where: { id: stored.id } });
-    throw AppError.forbidden('Account is locked');
-  }
-
-  await prisma.refreshToken.delete({ where: { id: stored.id } });
-
-  const accessToken = signAccess(stored.user.id, stored.user.role);
-  const newRefresh = signRefresh();
-
-  await prisma.refreshToken.create({
-    data: { userId: stored.user.id, tokenHash: newRefresh.hash, expiresAt: newRefresh.expiresAt },
-  });
-
-  return { accessToken, refreshToken: newRefresh.raw };
 }
 
 export async function logout(rawRefreshToken: string) {
@@ -135,8 +137,8 @@ export async function forgotPassword(email: string) {
   if (!user) return;
 
   const resetToken = randomUUID();
-  if (env.DEBUG_LOG_RESET_TOKENS) {
-    logger.warn({ email: normalizedEmail, resetToken: maskToken(resetToken) }, 'Mock password reset token generated');
+  if (env.NODE_ENV === 'development' && env.DEBUG_LOG_RESET_TOKENS) {
+    logger.warn({ email: normalizedEmail, resetToken }, 'Mock password reset token generated');
   }
 
   const hash = hashToken(resetToken);
