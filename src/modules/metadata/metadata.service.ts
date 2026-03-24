@@ -24,10 +24,10 @@ export function getEnums() {
     contactStatuses: Object.values(ContactStatus),
     orderStatusTransitions: ORDER_STATUS_TRANSITIONS,
     bookSortOptions: [
-      { value: 'price_asc', label: 'Price ascending' },
-      { value: 'price_desc', label: 'Price descending' },
-      { value: 'newest', label: 'Newest first' },
-      { value: 'best_seller', label: 'Best seller' },
+      { value: 'price_asc', label: 'Giá tăng dần' },
+      { value: 'price_desc', label: 'Giá giảm dần' },
+      { value: 'newest', label: 'Mới cập nhật' },
+      { value: 'best_seller', label: 'Bán chạy' },
     ],
   };
 }

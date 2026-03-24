@@ -6,6 +6,7 @@ import { getIO } from '../../shared/socket/index.js';
 import { calcDiscountTx } from '../vouchers/vouchers.service.js';
 import type { Prisma } from '@prisma/client';
 import crypto from 'node:crypto';
+import type { OrderStatus } from '../../shared/constants/index.js';
 
 function generateOrderCode(): string {
   const date = new Date();
@@ -111,7 +112,7 @@ export async function createOrder(userId: string, data: {
   return order;
 }
 
-export async function listMyOrders(userId: string, query: { page: number; limit: number; status?: string }) {
+export async function listMyOrders(userId: string, query: { page: number; limit: number; status?: OrderStatus }) {
   const { page, limit, status } = query;
   const where: Prisma.OrderWhereInput = { userId };
   if (status) where.orderStatus = status as never;
@@ -196,7 +197,7 @@ export async function cancelMyOrder(userId: string, orderId: string, reason: str
   return cancelledOrder;
 }
 
-export async function listAll(query: { page: number; limit: number; status?: string; search?: string; userId?: string }) {
+export async function listAll(query: { page: number; limit: number; status?: OrderStatus; search?: string; userId?: string }) {
   const { page, limit, status, search, userId } = query;
   const where: Prisma.OrderWhereInput = {};
   if (status) where.orderStatus = status as never;

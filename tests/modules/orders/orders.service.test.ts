@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { adminOrderQuerySchema, orderQuerySchema } from '../../../src/modules/orders/orders.validation.js';
 
 const prismaMock = vi.hoisted(() => ({
   $transaction: vi.fn(),
@@ -66,5 +67,15 @@ describe('orders.service.cancelMyOrder', () => {
     await expect(
       ordersService.cancelMyOrder('user-1', 'order-1', 'Changed my mind'),
     ).rejects.toThrow('Order status changed, please retry');
+  });
+});
+
+describe('orders.validation', () => {
+  test('rejects invalid customer order status filters before Prisma is called', () => {
+    expect(() => orderQuerySchema.parse({ status: 'foo' })).toThrow();
+  });
+
+  test('rejects invalid admin order status filters before Prisma is called', () => {
+    expect(() => adminOrderQuerySchema.parse({ status: 'foo' })).toThrow();
   });
 });

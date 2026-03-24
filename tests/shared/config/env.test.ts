@@ -50,4 +50,18 @@ describe('shared config env', () => {
       } as never).PAYMENT_WEBHOOK_SECRET,
     ).toBeUndefined();
   });
+
+  test('normalizes localhost PostgreSQL URLs to IPv4 on Windows', async () => {
+    const mod = await import('../../../src/shared/config/env.js');
+
+    expect(
+      mod.parseEnv(
+        {
+          ...baseEnv,
+          DATABASE_URL: 'postgresql://postgres:123456@localhost:5433/book_store_manager?schema=public',
+        } as never,
+        'win32',
+      ).DATABASE_URL,
+    ).toBe('postgresql://postgres:123456@127.0.0.1:5433/book_store_manager?schema=public');
+  });
 });

@@ -1,4 +1,14 @@
 import { z } from 'zod';
+import { OrderStatus } from '../../shared/constants/index.js';
+
+const orderStatusSchema = z.enum([
+  OrderStatus.PENDING,
+  OrderStatus.CONFIRMED,
+  OrderStatus.PACKING,
+  OrderStatus.SHIPPING,
+  OrderStatus.COMPLETED,
+  OrderStatus.CANCELLED,
+]);
 
 export const createOrderSchema = z.object({
   addressId: z.string().uuid(),
@@ -18,13 +28,13 @@ export const cancelOrderSchema = z.object({
 export const orderQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(50).default(20),
-  status: z.string().optional(),
+  status: orderStatusSchema.optional(),
 });
 
 export const adminOrderQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(50).default(20),
-  status: z.string().optional(),
+  status: orderStatusSchema.optional(),
   search: z.string().optional(),
   userId: z.string().uuid().optional(),
 });

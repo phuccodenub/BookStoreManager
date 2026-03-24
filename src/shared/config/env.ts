@@ -21,13 +21,33 @@ const envSchema = z.object({
 
 export type Env = z.infer<typeof envSchema>;
 
-export function parseEnv(rawEnv: NodeJS.ProcessEnv): Env {
+function normalizeDatabaseUrl(databaseUrl: string, platform: NodeJS.Platform): string {
+  if (platform !== 'win32') {
+    return databaseUrl;
+  }
+
+  const parsedUrl = new URL(databaseUrl);
+  if (parsedUrl.hostname !== 'localhost') {
+    return databaseUrl;
+  }
+
+  // Docker Desktop + WSL on Windows can resolve localhost through an IPv6 relay.
+  // For Prisma/Postgres this can cause flaky routing, so we pin development traffic to IPv4.
+  parsedUrl.hostname = '127.0.0.1';
+  return parsedUrl.toString();
+}
+
+export function parseEnv(rawEnv: NodeJS.ProcessEnv, platform: NodeJS.Platform = process.platform): Env {
   const parsed = envSchema.safeParse(rawEnv);
   if (!parsed.success) {
     throw new Error(JSON.stringify(parsed.error.flatten().fieldErrors));
   }
 
-  const data = parsed.data;
+  const data = {
+    ...parsed.data,
+    DATABASE_URL: normalizeDatabaseUrl(parsed.data.DATABASE_URL, platform),
+  };
+
   if (data.NODE_ENV !== 'test' && !data.PAYMENT_WEBHOOK_SECRET) {
     throw new Error('PAYMENT_WEBHOOK_SECRET is required outside test environments');
   }

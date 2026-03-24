@@ -39,6 +39,10 @@ export class AppError extends Error {
     return new AppError(StatusCodes.CONFLICT, 'CONFLICT', message);
   }
 
+  static serviceUnavailable(message = 'Service unavailable', details?: unknown) {
+    return new AppError(StatusCodes.SERVICE_UNAVAILABLE, 'SERVICE_UNAVAILABLE', message, details);
+  }
+
   static tooManyRequests(message = 'Too many requests') {
     return new AppError(StatusCodes.TOO_MANY_REQUESTS, 'TOO_MANY_REQUESTS', message);
   }

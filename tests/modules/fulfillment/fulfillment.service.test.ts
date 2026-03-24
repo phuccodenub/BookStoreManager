@@ -61,6 +61,6 @@ describe('fulfillment.service.transitionOrder', () => {
 
     await expect(
       fulfillmentService.transitionOrder('order-1', 'confirmed', 'staff-1'),
-    ).rejects.toThrow('Order status changed, please retry');
+    ).rejects.toThrow('Trạng thái đơn hàng đã thay đổi, vui lòng thử lại');
   });
 });

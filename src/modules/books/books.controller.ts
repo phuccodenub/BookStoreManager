@@ -1,24 +1,32 @@
 import type { Request, Response, NextFunction } from 'express';
 import * as svc from './books.service.js';
 import { sendSuccess, sendCreated, sendNoContent, buildPaginationMeta, param } from '../../shared/http/index.js';
-import { fileUrl } from '../../shared/storage/index.js';
+import { deleteUploadedFile, fileUrl } from '../../shared/storage/index.js';
+
+function viewerRole(req: Request): string | undefined {
+  return ((req as unknown as Record<string, unknown>)['user'] as { role?: string } | undefined)?.role;
+}
+
+async function cleanupUploadedFiles(files: string[]) {
+  await Promise.allSettled(files.map((file) => deleteUploadedFile(file)));
+}
 
 export async function list(req: Request, res: Response, next: NextFunction) {
   try {
     const q = req.query as unknown as Parameters<typeof svc.list>[0];
-    const { items, total } = await svc.list(q);
+    const { items, total } = await svc.list(q, viewerRole(req));
     sendSuccess(res, items, 'Success', 200, buildPaginationMeta(q.page, q.limit, total));
   } catch (e) { next(e); }
 }
 
 export async function getById(req: Request, res: Response, next: NextFunction) {
-  try { sendSuccess(res, await svc.getById(param(req, 'id'))); } catch (e) { next(e); }
+  try { sendSuccess(res, await svc.getById(param(req, 'id'), viewerRole(req))); } catch (e) { next(e); }
 }
 
 export async function related(req: Request, res: Response, next: NextFunction) {
   try {
     const { limit } = req.query as unknown as { limit: number };
-    sendSuccess(res, await svc.listRelated(param(req, 'id'), limit));
+    sendSuccess(res, await svc.listRelated(param(req, 'id'), limit, viewerRole(req)));
   } catch (e) { next(e); }
 }
 
@@ -38,7 +46,10 @@ export async function uploadCover(req: Request, res: Response, next: NextFunctio
   try {
     if (!req.file) { res.status(400).json({ success: false, error: { code: 'NO_FILE', message: 'No file uploaded' } }); return; }
     sendSuccess(res, await svc.updateCover(param(req, 'id'), fileUrl(req.file.filename)));
-  } catch (e) { next(e); }
+  } catch (e) {
+    if (req.file) await cleanupUploadedFiles([req.file.filename]);
+    next(e);
+  }
 }
 
 export async function uploadImages(req: Request, res: Response, next: NextFunction) {
@@ -47,9 +58,13 @@ export async function uploadImages(req: Request, res: Response, next: NextFuncti
     if (!files?.length) { res.status(400).json({ success: false, error: { code: 'NO_FILE', message: 'No files uploaded' } }); return; }
     const urls = files.map((f) => fileUrl(f.filename));
     sendCreated(res, await svc.addImages(param(req, 'id'), urls));
-  } catch (e) { next(e); }
+  } catch (e) {
+    const files = req.files as Express.Multer.File[] | undefined;
+    if (files?.length) await cleanupUploadedFiles(files.map((file) => file.filename));
+    next(e);
+  }
 }
 
 export async function removeImage(req: Request, res: Response, next: NextFunction) {
-  try { await svc.removeImage(param(req, 'imageId')); sendNoContent(res); } catch (e) { next(e); }
+  try { await svc.removeImage(param(req, 'id'), param(req, 'imageId')); sendNoContent(res); } catch (e) { next(e); }
 }

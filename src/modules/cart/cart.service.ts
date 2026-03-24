@@ -1,10 +1,24 @@
 import { prisma } from '../../shared/prisma/index.js';
 import { AppError } from '../../shared/errors/index.js';
+import { Prisma } from '@prisma/client';
 
 async function getOrCreateCart(userId: string) {
-  let cart = await prisma.cart.findUnique({ where: { userId } });
-  if (!cart) cart = await prisma.cart.create({ data: { userId } });
-  return cart;
+  try {
+    return await prisma.cart.upsert({
+      where: { userId },
+      update: {},
+      create: { userId },
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      const existingCart = await prisma.cart.findUnique({ where: { userId } });
+      if (existingCart) {
+        return existingCart;
+      }
+    }
+
+    throw error;
+  }
 }
 
 export async function getCart(userId: string) {
