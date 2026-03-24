@@ -126,6 +126,7 @@ This document maps the current backend contract to the frontend areas described 
 ## Frontend bootstrap checklist
 
 - Run Docker Compose for PostgreSQL
+- Use `127.0.0.1:5433` in `DATABASE_URL` on Windows/Docker Desktop setups
 - Copy `.env.example` to `.env`
 - Run migrations and seed
 - Login with demo accounts from README

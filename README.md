@@ -40,6 +40,9 @@ docker compose up -d postgres
 
 Make sure your `.env` `DATABASE_URL` credentials match `docker-compose.yml` (`POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`).
 
+On Windows + Docker Desktop/WSL, prefer `127.0.0.1` over `localhost` for PostgreSQL to avoid IPv6 relay mismatches.
+Also note: if the Docker volume already exists, changing `POSTGRES_PASSWORD` in `.env` or `docker-compose.yml` does not rotate the existing database password. Either recreate the volume with `docker compose down -v` or update the role password inside the running container.
+
 Create a dedicated local PostgreSQL database for the project:
 
 ```sql
@@ -49,7 +52,9 @@ CREATE DATABASE book_store_manager;
 Recommended local connection string:
 
 ```env
-DATABASE_URL=postgresql://postgres:your_password@localhost:5432/book_store_manager?schema=public
+POSTGRES_PASSWORD=123456
+POSTGRES_DB=book_store_manager
+DATABASE_URL=postgresql://postgres:123456@127.0.0.1:5433/book_store_manager?schema=public
 ```
 
 ## Setup
@@ -130,6 +135,8 @@ Helpful frontend bootstrap endpoints:
 - `GET /api/payments/:orderId`
 - `GET /api/orders/:id/invoice`
 - `GET /api/orders/:id/delivery-note`
+
+If `/api/settings` works but `/api/home` fails with a Prisma connection error, the backend is usually pointing at the wrong PostgreSQL host/password combination. Verify `GET /api/health` first. It now returns HTTP `503` when the database is disconnected.
 ## Validation Commands
 
 ```bash
