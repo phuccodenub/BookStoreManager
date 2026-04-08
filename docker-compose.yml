@@ -5,8 +5,11 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-123456}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-yourpassword}
       POSTGRES_DB: ${POSTGRES_DB:-book_store_manager}
+      # On some Windows setups, Prisma engine may fail SCRAM auth (P1000) even when psql works.
+      # Using md5 for host auth keeps local dev unblocked.
+      POSTGRES_INITDB_ARGS: "--auth-host=md5"
     ports:
       - "5433:5432"
     volumes:

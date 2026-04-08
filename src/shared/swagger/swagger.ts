@@ -61,7 +61,6 @@ const swaggerDocument = {
         type: 'object',
         properties: {
           accessToken: { type: 'string' },
-          refreshToken: { type: 'string' },
           user: {
             type: 'object',
             properties: {
@@ -75,9 +74,18 @@ const swaggerDocument = {
       },
       RefreshRequest: {
         type: 'object',
-        required: ['refreshToken'],
         properties: {
-          refreshToken: { type: 'string' },
+          refreshToken: {
+            type: 'string',
+            nullable: true,
+            description: 'Optional fallback for non-browser clients. Browser clients should rely on the httpOnly refresh cookie.',
+          },
+        },
+      },
+      RefreshResponse: {
+        type: 'object',
+        properties: {
+          accessToken: { type: 'string' },
         },
       },
       UpdateProfileRequest: {
@@ -263,10 +271,17 @@ const swaggerDocument = {
       post: {
         tags: ['Auth'],
         summary: 'Authenticate a user',
+        description: 'Returns an access token in the JSON payload and rotates the refresh token into an httpOnly cookie.',
         requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/LoginRequest' } } } },
         responses: {
           '200': {
             description: 'Authenticated successfully',
+            headers: {
+              'Set-Cookie': {
+                description: 'Rotated httpOnly refresh token cookie scoped to /api/auth.',
+                schema: { type: 'string' },
+              },
+            },
             content: {
               'application/json': {
                 schema: {
@@ -284,10 +299,50 @@ const swaggerDocument = {
     '/api/auth/refresh': {
       post: {
         tags: ['Auth'],
-        summary: 'Rotate access and refresh token',
-        requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/RefreshRequest' } } } },
+        summary: 'Rotate the access token using the refresh cookie',
+        description: 'Browser clients should send credentials so the httpOnly refresh cookie can be used. A refreshToken body field is accepted only as a compatibility fallback for non-browser clients.',
+        requestBody: { required: false, content: { 'application/json': { schema: { $ref: '#/components/schemas/RefreshRequest' } } } },
         responses: {
-          '200': { description: 'Tokens refreshed successfully', content: { 'application/json': { schema: { $ref: '#/components/schemas/SuccessResponse' } } } },
+          '200': {
+            description: 'Access token refreshed successfully',
+            headers: {
+              'Set-Cookie': {
+                description: 'Rotated httpOnly refresh token cookie scoped to /api/auth.',
+                schema: { type: 'string' },
+              },
+            },
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/SuccessResponse' },
+                    { type: 'object', properties: { data: { $ref: '#/components/schemas/RefreshResponse' } } },
+                  ],
+                },
+              },
+            },
+          },
+          '401': { description: 'Refresh token missing, expired, or invalid' },
+        },
+      },
+    },
+    '/api/auth/logout': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Log out the current session',
+        description: 'Clears the httpOnly refresh cookie. A refreshToken body field is accepted only as a compatibility fallback for non-browser clients.',
+        requestBody: { required: false, content: { 'application/json': { schema: { $ref: '#/components/schemas/RefreshRequest' } } } },
+        responses: {
+          '200': {
+            description: 'Logged out successfully',
+            headers: {
+              'Set-Cookie': {
+                description: 'Clears the refresh token cookie scoped to /api/auth.',
+                schema: { type: 'string' },
+              },
+            },
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/SuccessResponse' } } },
+          },
         },
       },
     },

@@ -36,6 +36,16 @@ import homeRoutes from './modules/home/home.routes.js';
 
 export function createApp() {
   const app = express();
+  const allowedOrigins = new Set<string>();
+  const frontendOrigin = new URL(env.FRONTEND_ORIGIN);
+  allowedOrigins.add(frontendOrigin.origin);
+  if (frontendOrigin.hostname === '127.0.0.1') {
+    frontendOrigin.hostname = 'localhost';
+    allowedOrigins.add(frontendOrigin.origin);
+  } else if (frontendOrigin.hostname === 'localhost') {
+    frontendOrigin.hostname = '127.0.0.1';
+    allowedOrigins.add(frontendOrigin.origin);
+  }
 
   /* ---------- global middleware ---------- */
   app.use(requestIdMiddleware);
@@ -48,7 +58,19 @@ export function createApp() {
     }),
   );
   app.use(helmet());
-  app.use(cors());
+  app.use(
+    cors({
+      origin(origin, callback) {
+        if (!origin || allowedOrigins.has(origin)) {
+          callback(null, true);
+          return;
+        }
+
+        callback(new Error('Not allowed by CORS'));
+      },
+      credentials: true,
+    }),
+  );
   app.use(express.json({ limit: '2mb' }));
   app.use(express.urlencoded({ extended: true }));
 

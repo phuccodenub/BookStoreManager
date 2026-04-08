@@ -1,10 +1,17 @@
 import { prisma } from '../../shared/prisma/index.js';
 import { AppError } from '../../shared/errors/index.js';
+import { Role } from '../../shared/constants/index.js';
 import type { Prisma } from '@prisma/client';
 
-export async function list(q: { page: number; limit: number; search?: string }) {
+function isPrivilegedViewer(role?: string) {
+  return role === Role.ADMIN || role === Role.STAFF;
+}
+
+export async function list(q: { page: number; limit: number; search?: string }, viewerRole?: string) {
+  const privilegedViewer = isPrivilegedViewer(viewerRole);
   const where: Prisma.AuthorWhereInput = {};
   if (q.search) where.name = { contains: q.search, mode: 'insensitive' };
+  if (!privilegedViewer) where.status = true;
   const [items, total] = await Promise.all([
     prisma.author.findMany({ where, skip: (q.page - 1) * q.limit, take: q.limit, orderBy: { name: 'asc' } }),
     prisma.author.count({ where }),
@@ -12,8 +19,17 @@ export async function list(q: { page: number; limit: number; search?: string }) 
   return { items, total };
 }
 
-export async function getById(id: string) {
-  const a = await prisma.author.findUnique({ where: { id }, include: { books: { select: { id: true, title: true, slug: true, coverImage: true, price: true } } } });
+export async function getById(id: string, viewerRole?: string) {
+  const privilegedViewer = isPrivilegedViewer(viewerRole);
+  const a = await prisma.author.findFirst({
+    where: privilegedViewer ? { id } : { id, status: true },
+    include: {
+      books: {
+        where: privilegedViewer ? undefined : { status: 'active' },
+        select: { id: true, title: true, slug: true, coverImage: true, price: true },
+      },
+    },
+  });
   if (!a) throw AppError.notFound('Author');
   return a;
 }

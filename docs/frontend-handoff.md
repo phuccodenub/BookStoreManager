@@ -31,6 +31,10 @@ This document maps the current backend contract to the frontend areas described 
   - `POST /api/auth/forgot-password`
   - `POST /api/auth/reset-password`
   - `POST /api/auth/change-password`
+  - Browser flow:
+    - `login` returns the access token in JSON and rotates the refresh token into an `httpOnly` cookie on `/api/auth`
+    - `refresh` and `logout` should be called with `credentials: 'include'`; the refresh cookie is the primary transport
+    - `refreshToken` in the request body is now only a compatibility fallback for non-browser clients
 - Profile and address book:
   - `GET /api/users/me`
   - `PATCH /api/users/me`
@@ -127,6 +131,7 @@ This document maps the current backend contract to the frontend areas described 
 
 - Run Docker Compose for PostgreSQL
 - Use `127.0.0.1:5433` in `DATABASE_URL` on Windows/Docker Desktop setups
+- Set `FRONTEND_ORIGIN` in backend `.env` to the exact frontend origin used in the browser, for example `http://127.0.0.1:5173`
 - Copy `.env.example` to `.env`
 - Run migrations and seed
 - Login with demo accounts from README
