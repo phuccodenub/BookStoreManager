@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { validate, authenticate, rateLimit } from '../../shared/middleware/index.js';
+import { env } from '../../shared/config/index.js';
 import {
   registerSchema,
   loginSchema,
@@ -13,13 +14,13 @@ import * as ctrl from './auth.controller.js';
 const router = Router();
 
 const loginLimiter = rateLimit({
-  windowMs: 15 * 60_000,
-  max: 5,
+  windowMs: env.NODE_ENV === 'development' ? 5 * 60_000 : 15 * 60_000,
+  max: env.NODE_ENV === 'development' ? 80 : 5,
   message: 'Too many login attempts. Please try again later.',
 });
 const refreshLimiter = rateLimit({
-  windowMs: 15 * 60_000,
-  max: 20,
+  windowMs: env.NODE_ENV === 'development' ? 5 * 60_000 : 15 * 60_000,
+  max: env.NODE_ENV === 'development' ? 150 : 20,
   message: 'Too many token refresh attempts. Please try again later.',
 });
 const passwordLimiter = rateLimit({
