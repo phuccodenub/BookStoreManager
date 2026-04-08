@@ -1,16 +1,28 @@
 import { prisma } from '../../shared/prisma/index.js';
 import { AppError } from '../../shared/errors/index.js';
+import { Role } from '../../shared/constants/index.js';
 import type { Prisma } from '@prisma/client';
 
-export async function list(q: { page: number; limit: number; search?: string; parentId?: string }) {
+function isPrivilegedViewer(role?: string) {
+  return role === Role.ADMIN || role === Role.STAFF;
+}
+
+export async function list(q: { page: number; limit: number; search?: string; parentId?: string }, viewerRole?: string) {
+  const privilegedViewer = isPrivilegedViewer(viewerRole);
   const where: Prisma.CategoryWhereInput = {};
   if (q.search) where.name = { contains: q.search, mode: 'insensitive' };
   if (q.parentId !== undefined) where.parentId = q.parentId || null;
+  if (!privilegedViewer) where.status = true;
 
   const [items, total] = await Promise.all([
     prisma.category.findMany({
       where,
-      include: { children: { select: { id: true, name: true, slug: true } } },
+      include: {
+        children: {
+          where: privilegedViewer ? undefined : { status: true },
+          select: { id: true, name: true, slug: true },
+        },
+      },
       skip: (q.page - 1) * q.limit,
       take: q.limit,
       orderBy: { name: 'asc' },
@@ -20,10 +32,16 @@ export async function list(q: { page: number; limit: number; search?: string; pa
   return { items, total };
 }
 
-export async function getById(id: string) {
-  const cat = await prisma.category.findUnique({
-    where: { id },
-    include: { children: true, parent: { select: { id: true, name: true, slug: true } } },
+export async function getById(id: string, viewerRole?: string) {
+  const privilegedViewer = isPrivilegedViewer(viewerRole);
+  const cat = await prisma.category.findFirst({
+    where: privilegedViewer ? { id } : { id, status: true },
+    include: {
+      children: {
+        where: privilegedViewer ? undefined : { status: true },
+      },
+      parent: { select: { id: true, name: true, slug: true } },
+    },
   });
   if (!cat) throw AppError.notFound('Category');
   return cat;
