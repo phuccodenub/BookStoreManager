@@ -12,6 +12,7 @@ const envSchema = z.object({
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
 
   APP_BASE_URL: z.string().url().default('http://localhost:4000'),
+  FRONTEND_ORIGIN: z.string().url().default('http://127.0.0.1:5173'),
   UPLOAD_DIR: z.string().default('uploads'),
   DEFAULT_SHIPPING_FEE: z.coerce.number().nonnegative().default(25000),
   LOW_STOCK_THRESHOLD: z.coerce.number().int().nonnegative().default(5),
