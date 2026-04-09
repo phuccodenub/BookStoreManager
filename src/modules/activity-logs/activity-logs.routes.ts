@@ -6,6 +6,6 @@ import * as ctrl from './activity-logs.controller.js';
 
 const router = Router();
 
-router.get('/activity-logs', authenticate, authorize(Role.ADMIN), validate({ query: activityLogQuerySchema }), ctrl.list);
+router.get('/activity-logs', authenticate, authorize(Role.ADMIN, Role.STAFF), validate({ query: activityLogQuerySchema }), ctrl.list);
 
 export default router;
