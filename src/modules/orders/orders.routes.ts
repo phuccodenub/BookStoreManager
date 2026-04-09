@@ -3,7 +3,7 @@ import { authenticate, authorize, validate } from '../../shared/middleware/index
 import { Role } from '../../shared/constants/index.js';
 import {
   createOrderSchema, orderIdParam, cancelOrderSchema,
-  orderQuerySchema, adminOrderQuerySchema, updateOrderStatusSchema,
+  orderQuerySchema, adminOrderQuerySchema, updateOrderStatusSchema, createManualOrderSchema, updateOrderOpsSchema,
 } from './orders.validation.js';
 import * as ctrl from './orders.controller.js';
 
@@ -16,10 +16,12 @@ router.get('/orders/me/:id',        authenticate, validate({ params: orderIdPara
 router.patch('/orders/me/:id/cancel', authenticate, validate({ params: orderIdParam, body: cancelOrderSchema }), ctrl.cancelMine);
 
 /* Admin routes */
+router.post('/orders/manual',        authenticate, authorize(Role.ADMIN, Role.STAFF), validate({ body: createManualOrderSchema }), ctrl.createManual);
 router.get('/orders',                authenticate, authorize(Role.ADMIN, Role.STAFF), validate({ query: adminOrderQuerySchema }), ctrl.listAll);
 router.get('/orders/:id/invoice',    authenticate, authorize(Role.ADMIN, Role.STAFF), validate({ params: orderIdParam }), ctrl.downloadInvoice);
 router.get('/orders/:id/delivery-note', authenticate, authorize(Role.ADMIN, Role.STAFF), validate({ params: orderIdParam }), ctrl.downloadDeliveryNote);
 router.get('/orders/:id',            authenticate, authorize(Role.ADMIN, Role.STAFF), validate({ params: orderIdParam }), ctrl.getById);
+router.patch('/orders/:id/ops',      authenticate, authorize(Role.ADMIN, Role.STAFF), validate({ params: orderIdParam, body: updateOrderOpsSchema }), ctrl.updateOps);
 router.patch('/orders/:id/status',   authenticate, authorize(Role.ADMIN, Role.STAFF), validate({ params: orderIdParam, body: updateOrderStatusSchema }), ctrl.updateStatus);
 
 export default router;

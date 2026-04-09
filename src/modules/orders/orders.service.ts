@@ -6,7 +6,13 @@ import { getIO } from '../../shared/socket/index.js';
 import { calcDiscountTx } from '../vouchers/vouchers.service.js';
 import type { Prisma } from '@prisma/client';
 import crypto from 'node:crypto';
-import type { OrderStatus } from '../../shared/constants/index.js';
+import type { OrderStatus, PaymentStatus } from '../../shared/constants/index.js';
+import {
+  decorateOrderRecord,
+  getSalesChannelSearchFilter,
+  serializeOrderCustomerNote,
+  type SalesChannel,
+} from './orders.metadata.js';
 
 function generateOrderCode(): string {
   const date = new Date();
@@ -15,10 +21,26 @@ function generateOrderCode(): string {
   return `ORD-${ymd}-${rand}`;
 }
 
+function normalizeDateBoundary(value: string | undefined, kind: 'start' | 'end') {
+  if (!value) {
+    return null;
+  }
+
+  const normalized = value.length <= 10
+    ? new Date(`${value}T${kind === 'start' ? '00:00:00.000' : '23:59:59.999'}Z`)
+    : new Date(value);
+
+  return Number.isNaN(normalized.getTime()) ? null : normalized;
+}
+
+function decorateOrderCollection<T extends { note?: string | null }>(orders: T[]) {
+  return orders.map((order) => decorateOrderRecord(order));
+}
+
 export async function createOrder(userId: string, data: {
   addressId: string; paymentMethod: 'cod' | 'online'; voucherCode?: string; note?: string; cartItemIds?: string[];
 }) {
-  const order = await prisma.$transaction(async (tx) => {
+  const createdOrder = await prisma.$transaction(async (tx) => {
     const address = await tx.address.findFirst({ where: { id: data.addressId, userId } });
     if (!address) throw AppError.badRequest('Address not found');
 
@@ -73,7 +95,7 @@ export async function createOrder(userId: string, data: {
         shippingFee,
         discountAmount,
         totalAmount,
-        note: data.note ?? null,
+        note: serializeOrderCustomerNote(data.note, 'website'),
         items: {
           create: items.map(i => ({
             bookId: i.bookId,
@@ -95,9 +117,9 @@ export async function createOrder(userId: string, data: {
   try {
     const io = getIO();
     const payload = {
-      orderId: order.id,
-      orderCode: order.orderCode,
-      orderStatus: order.orderStatus,
+      orderId: createdOrder.id,
+      orderCode: createdOrder.orderCode,
+      orderStatus: createdOrder.orderStatus,
     };
     io.to(`user:${userId}`).emit('order:created', payload);
     io.to('role:staff').to('role:admin').emit('order:created', payload);
@@ -109,7 +131,137 @@ export async function createOrder(userId: string, data: {
     // socket not initialized
   }
 
-  return order;
+  return decorateOrderRecord(createdOrder);
+}
+
+export async function createManualOrder(actorUserId: string, data: {
+  userId: string;
+  receiverName: string;
+  receiverPhone: string;
+  province: string;
+  district: string;
+  ward: string;
+  detailAddress: string;
+  paymentMethod: 'cod' | 'online';
+  paymentStatus?: Exclude<PaymentStatus, 'refunded'>;
+  salesChannel?: SalesChannel;
+  shippingFee?: number;
+  voucherCode?: string;
+  customerNote?: string;
+  items: Array<{ bookId: string; quantity: number }>;
+}) {
+  const createdOrder = await prisma.$transaction(async (tx) => {
+    const customer = await tx.user.findUnique({ where: { id: data.userId } });
+    if (!customer) throw AppError.badRequest('Customer not found');
+
+    const config = await tx.systemConfig.findUnique({ where: { id: 'default' } });
+    const shippingFee = data.shippingFee ?? Number(config?.shippingFee ?? env.DEFAULT_SHIPPING_FEE);
+    const paymentStatus = data.paymentStatus ?? (data.paymentMethod === 'online' ? 'pending' : 'unpaid');
+    const salesChannel = data.salesChannel ?? 'hotline';
+    const requestedBookIds = [...new Set(data.items.map((item) => item.bookId))];
+    const books = await tx.book.findMany({
+      where: { id: { in: requestedBookIds } },
+      select: { id: true, title: true, price: true, stockQuantity: true, status: true },
+    });
+
+    if (books.length !== requestedBookIds.length) {
+      throw AppError.badRequest('One or more books were not found');
+    }
+
+    const bookMap = new Map(books.map((book) => [book.id, book]));
+    let subtotal = 0;
+
+    for (const item of data.items) {
+      const book = bookMap.get(item.bookId);
+      if (!book) throw AppError.badRequest('Book not found');
+      if (book.status !== 'active') throw AppError.badRequest(`Book "${book.title}" is not available`);
+      if (item.quantity > book.stockQuantity) throw AppError.badRequest(`Not enough stock for "${book.title}"`);
+      subtotal += Number(book.price) * item.quantity;
+    }
+
+    let voucherId: string | null = null;
+    let discountAmount = 0;
+    if (data.voucherCode) {
+      const voucher = await tx.voucher.findUnique({ where: { code: data.voucherCode.toUpperCase() } });
+      if (!voucher) throw AppError.badRequest('Voucher not found');
+      discountAmount = calcDiscountTx(voucher, subtotal);
+      voucherId = voucher.id;
+      const updatedVoucher = await tx.voucher.updateMany({
+        where: { id: voucher.id, usedCount: voucher.usedCount },
+        data: { usedCount: { increment: 1 } },
+      });
+      if (updatedVoucher.count === 0) {
+        throw AppError.badRequest('Voucher usage changed, please retry');
+      }
+    }
+
+    const totalAmount = subtotal + shippingFee - discountAmount;
+    const addressSnapshot = `${data.receiverName}, ${data.receiverPhone}, ${data.detailAddress}, ${data.ward}, ${data.district}, ${data.province}`;
+
+    const order = await tx.order.create({
+      data: {
+        orderCode: generateOrderCode(),
+        userId: data.userId,
+        voucherId,
+        receiverName: data.receiverName,
+        receiverPhone: data.receiverPhone,
+        addressSnapshot,
+        paymentMethod: data.paymentMethod,
+        paymentStatus,
+        subtotal,
+        shippingFee,
+        discountAmount,
+        totalAmount,
+        note: serializeOrderCustomerNote(data.customerNote, salesChannel),
+        items: {
+          create: data.items.map((item) => {
+            const book = bookMap.get(item.bookId);
+            return {
+              bookId: item.bookId,
+              bookNameSnapshot: book?.title ?? 'Sản phẩm',
+              quantity: item.quantity,
+              unitPrice: Number(book?.price ?? 0),
+              totalPrice: Number(book?.price ?? 0) * item.quantity,
+            };
+          }),
+        },
+        ...(paymentStatus !== 'unpaid'
+          ? {
+              payment: {
+                create: {
+                  provider: 'manual_admin',
+                  amount: totalAmount,
+                  status: paymentStatus,
+                  paidAt: paymentStatus === 'paid' ? new Date() : null,
+                },
+              },
+            }
+          : {}),
+      },
+      include: { items: true, payment: true },
+    });
+
+    return order;
+  });
+
+  try {
+    const io = getIO();
+    const payload = {
+      orderId: createdOrder.id,
+      orderCode: createdOrder.orderCode,
+      orderStatus: createdOrder.orderStatus,
+    };
+    io.to(`user:${createdOrder.userId}`).emit('order:created', payload);
+    io.to('role:staff').to('role:admin').emit('order:created', payload);
+    io.to('role:staff').to('role:admin').emit('notification:new', {
+      type: 'order',
+      ...payload,
+    });
+  } catch {
+    // socket not initialized
+  }
+
+  return decorateOrderRecord(createdOrder);
 }
 
 export async function listMyOrders(userId: string, query: { page: number; limit: number; status?: OrderStatus }) {
@@ -125,7 +277,7 @@ export async function listMyOrders(userId: string, query: { page: number; limit:
     }),
     prisma.order.count({ where }),
   ]);
-  return { items, total, page, limit };
+  return { items: decorateOrderCollection(items), total, page, limit };
 }
 
 export async function getMyOrder(userId: string, orderId: string) {
@@ -134,7 +286,7 @@ export async function getMyOrder(userId: string, orderId: string) {
     include: { items: true, payment: true, voucher: true },
   });
   if (!order) throw AppError.notFound('Order');
-  return order;
+  return decorateOrderRecord(order);
 }
 
 export async function cancelMyOrder(userId: string, orderId: string, reason: string) {
@@ -194,30 +346,69 @@ export async function cancelMyOrder(userId: string, orderId: string, reason: str
     // socket not initialized
   }
 
-  return cancelledOrder;
+  return decorateOrderRecord(cancelledOrder);
 }
 
-export async function listAll(query: { page: number; limit: number; status?: OrderStatus; search?: string; userId?: string }) {
-  const { page, limit, status, search, userId } = query;
-  const where: Prisma.OrderWhereInput = {};
-  if (status) where.orderStatus = status as never;
-  if (userId) where.userId = userId;
+export async function listAll(query: {
+  page: number;
+  limit: number;
+  status?: OrderStatus;
+  paymentStatus?: PaymentStatus;
+  salesChannel?: SalesChannel;
+  search?: string;
+  userId?: string;
+  from?: string;
+  to?: string;
+}) {
+  const { page, limit, status, paymentStatus, salesChannel, search, userId, from, to } = query;
+  const filters: Prisma.OrderWhereInput[] = [];
+
+  if (status) filters.push({ orderStatus: status as never });
+  if (paymentStatus) filters.push({ paymentStatus: paymentStatus as never });
+  if (userId) filters.push({ userId });
   if (search) {
-    where.OR = [
-      { orderCode: { contains: search, mode: 'insensitive' } },
-      { receiverName: { contains: search, mode: 'insensitive' } },
-      { receiverPhone: { contains: search } },
-    ];
+    filters.push({
+      OR: [
+        { orderCode: { contains: search, mode: 'insensitive' } },
+        { receiverName: { contains: search, mode: 'insensitive' } },
+        { receiverPhone: { contains: search } },
+      ],
+    });
   }
+
+  const createdAt: Prisma.DateTimeFilter = {};
+  const fromDate = normalizeDateBoundary(from, 'start');
+  const toDate = normalizeDateBoundary(to, 'end');
+  if (fromDate) createdAt.gte = fromDate;
+  if (toDate) createdAt.lte = toDate;
+  if (Object.keys(createdAt).length > 0) {
+    filters.push({ createdAt });
+  }
+
+  if (salesChannel) {
+    filters.push(getSalesChannelSearchFilter(salesChannel));
+  }
+
+  const where: Prisma.OrderWhereInput = filters.length > 0 ? { AND: filters } : {};
   const [items, total] = await Promise.all([
     prisma.order.findMany({
       where, skip: (page - 1) * limit, take: limit,
       orderBy: { createdAt: 'desc' },
-      include: { items: true, user: { select: { id: true, fullName: true, email: true } } },
+      include: {
+        items: true,
+        user: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+            phone: true,
+          },
+        },
+      },
     }),
     prisma.order.count({ where }),
   ]);
-  return { items, total, page, limit };
+  return { items: decorateOrderCollection(items), total, page, limit };
 }
 
 export async function getOrderById(id: string) {
@@ -227,11 +418,19 @@ export async function getOrderById(id: string) {
       items: { include: { book: { select: { id: true, slug: true, coverImage: true } } } },
       payment: true,
       voucher: true,
-      user: { select: { id: true, fullName: true, email: true, phone: true } },
+      user: {
+        select: {
+          id: true,
+          fullName: true,
+          email: true,
+          phone: true,
+          _count: { select: { orders: true } },
+        },
+      },
     },
   });
   if (!order) throw AppError.notFound('Order');
-  return order;
+  return decorateOrderRecord(order);
 }
 
 export async function updateOrderStatus(orderId: string, newStatus: string, cancelledReason?: string) {
@@ -246,5 +445,6 @@ export async function updateOrderStatus(orderId: string, newStatus: string, canc
   const updateData: Prisma.OrderUpdateInput = { orderStatus: newStatus as never };
   if (newStatus === 'cancelled' && cancelledReason) updateData.cancelledReason = cancelledReason;
 
-  return prisma.order.update({ where: { id: orderId }, data: updateData, include: { items: true } });
+  const updatedOrder = await prisma.order.update({ where: { id: orderId }, data: updateData, include: { items: true } });
+  return decorateOrderRecord(updatedOrder);
 }

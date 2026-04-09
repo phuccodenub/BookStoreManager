@@ -15,9 +15,52 @@ export async function create(req: Request, res: Response, next: NextFunction) {
       action: 'order_created',
       entityType: 'order',
       entityId: order.id,
-      newData: { orderCode: order.orderCode, orderStatus: order.orderStatus, totalAmount: order.totalAmount },
+      newData: { orderCode: order.orderCode, orderStatus: order.orderStatus, totalAmount: order.totalAmount, salesChannel: order.salesChannel },
       req,
     }).catch(() => undefined);
+    sendCreated(res, order);
+  } catch (e) { next(e); }
+}
+
+export async function createManual(req: Request, res: Response, next: NextFunction) {
+  try {
+    const order = await svc.createManualOrder(uid(req), req.body);
+    void logActivity({
+      userId: uid(req),
+      action: 'order_created',
+      entityType: 'order',
+      entityId: order.id,
+      newData: {
+        orderCode: order.orderCode,
+        orderStatus: order.orderStatus,
+        totalAmount: order.totalAmount,
+        salesChannel: order.salesChannel,
+      },
+      req,
+    }).catch(() => undefined);
+
+    if (req.body.internalNote) {
+      void logActivity({
+        userId: uid(req),
+        action: 'order_internal_note_added',
+        entityType: 'order',
+        entityId: order.id,
+        newData: { note: req.body.internalNote },
+        req,
+      }).catch(() => undefined);
+    }
+
+    if (req.body.trackingCode) {
+      void logActivity({
+        userId: uid(req),
+        action: 'order_tracking_updated',
+        entityType: 'order',
+        entityId: order.id,
+        newData: { trackingCode: req.body.trackingCode },
+        req,
+      }).catch(() => undefined);
+    }
+
     sendCreated(res, order);
   } catch (e) { next(e); }
 }
@@ -78,6 +121,37 @@ export async function downloadInvoice(req: Request, res: Response, next: NextFun
 
 export async function downloadDeliveryNote(req: Request, res: Response, next: NextFunction) {
   try { await sendOrderDocument(res, 'delivery-note', param(req, 'id')); } catch (e) { next(e); }
+}
+
+export async function updateOps(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = param(req, 'id');
+    const order = await svc.getOrderById(id);
+
+    if (req.body.trackingCode) {
+      await logActivity({
+        userId: uid(req),
+        action: 'order_tracking_updated',
+        entityType: 'order',
+        entityId: id,
+        newData: { trackingCode: req.body.trackingCode.trim(), orderCode: order.orderCode },
+        req,
+      });
+    }
+
+    if (req.body.internalNote) {
+      await logActivity({
+        userId: uid(req),
+        action: 'order_internal_note_added',
+        entityType: 'order',
+        entityId: id,
+        newData: { note: req.body.internalNote.trim(), orderCode: order.orderCode },
+        req,
+      });
+    }
+
+    sendSuccess(res, await svc.getOrderById(id));
+  } catch (e) { next(e); }
 }
 
 export async function updateStatus(req: Request, res: Response, next: NextFunction) {

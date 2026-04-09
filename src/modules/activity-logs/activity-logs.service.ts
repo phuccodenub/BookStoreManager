@@ -2,10 +2,11 @@ import { prisma } from '../../shared/prisma/index.js';
 import type { Prisma } from '@prisma/client';
 import type { Request } from 'express';
 
-export async function list(query: { page: number; limit: number; userId?: string; entityType?: string; action?: string }) {
-  const { page, limit, userId, entityType, action } = query;
+export async function list(query: { page: number; limit: number; userId?: string; entityId?: string; entityType?: string; action?: string }) {
+  const { page, limit, userId, entityId, entityType, action } = query;
   const where: Prisma.ActivityLogWhereInput = {};
   if (userId) where.userId = userId;
+  if (entityId) where.entityId = entityId;
   if (entityType) where.entityType = entityType;
   if (action) where.action = { contains: action, mode: 'insensitive' };
 
