@@ -1,0 +1,692 @@
+{
+  "info": {
+    "name": "BookStoreManager API (Full)",
+    "description": "Complete Postman collection generated from backend routes. Includes uploads and payment webhook.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "00 - Health",
+      "item": [
+        {
+          "name": "GET /api/health",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/health"
+          }
+        }
+      ]
+    },
+    {
+      "name": "01 - Auth",
+      "item": [
+        {
+          "name": "POST /api/auth/register",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"fullName\": \"User Test\",\n  \"email\": \"usertest@example.com\",\n  \"phone\": \"0909000001\",\n  \"password\": \"Password123!\"\n}" },
+            "url": "{{baseUrl}}/api/auth/register"
+          }
+        },
+        {
+          "name": "POST /api/auth/login (admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "pm.environment.set('adminToken', r.data.accessToken);",
+                  "pm.environment.set('adminRefreshToken', r.data.refreshToken);",
+                  "pm.environment.set('accessToken', r.data.accessToken);",
+                  "pm.environment.set('refreshToken', r.data.refreshToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@bookstore.com\",\n  \"password\": \"Password123!\"\n}" },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "POST /api/auth/login (staff)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "pm.environment.set('staffToken', r.data.accessToken);",
+                  "pm.environment.set('staffRefreshToken', r.data.refreshToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"staff@bookstore.com\",\n  \"password\": \"Password123!\"\n}" },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "POST /api/auth/login (customer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "pm.environment.set('customerToken', r.data.accessToken);",
+                  "pm.environment.set('customerRefreshToken', r.data.refreshToken);",
+                  "pm.environment.set('accessToken', r.data.accessToken);",
+                  "pm.environment.set('refreshToken', r.data.refreshToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"customer@bookstore.com\",\n  \"password\": \"Password123!\"\n}" },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "POST /api/auth/refresh",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" },
+            "url": "{{baseUrl}}/api/auth/refresh"
+          }
+        },
+        {
+          "name": "POST /api/auth/logout",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" },
+            "url": "{{baseUrl}}/api/auth/logout"
+          }
+        },
+        {
+          "name": "POST /api/auth/change-password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"currentPassword\": \"Password123!\",\n  \"newPassword\": \"Password1234!\"\n}" },
+            "url": "{{baseUrl}}/api/auth/change-password"
+          }
+        },
+        {
+          "name": "POST /api/auth/forgot-password",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"customer@bookstore.com\"\n}" },
+            "url": "{{baseUrl}}/api/auth/forgot-password"
+          }
+        },
+        {
+          "name": "POST /api/auth/reset-password",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"token\": \"replace-with-reset-token\",\n  \"newPassword\": \"Password123!\"\n}" },
+            "url": "{{baseUrl}}/api/auth/reset-password"
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Home/Metadata/Settings",
+      "item": [
+        { "name": "GET /api/home", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{baseUrl}}/api/home?limit=8" } },
+        { "name": "GET /api/metadata/enums", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{baseUrl}}/api/metadata/enums" } },
+        { "name": "GET /api/settings", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{baseUrl}}/api/settings" } },
+        {
+          "name": "PATCH /api/settings (admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"storeName\": \"MMT Hiệu Sách\",\n  \"shippingFee\": 25000\n}" },
+            "url": "{{baseUrl}}/api/settings"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Users",
+      "item": [
+        { "name": "GET /api/users/me", "request": { "method": "GET", "url": "{{baseUrl}}/api/users/me" } },
+        {
+          "name": "PATCH /api/users/me",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"fullName\": \"Customer Updated\",\n  \"phone\": \"0909999999\"\n}" },
+            "url": "{{baseUrl}}/api/users/me"
+          }
+        },
+        {
+          "name": "POST /api/users/me/avatar",
+          "request": {
+            "method": "POST",
+            "body": { "mode": "formdata", "formdata": [{ "key": "avatar", "type": "file", "src": "" }] },
+            "url": "{{baseUrl}}/api/users/me/avatar"
+          }
+        },
+        { "name": "GET /api/users", "request": { "method": "GET", "url": "{{baseUrl}}/api/users?page=1&limit=10" } },
+        { "name": "GET /api/users/:id", "request": { "method": "GET", "url": "{{baseUrl}}/api/users/{{userId}}" } },
+        {
+          "name": "POST /api/users",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const r = pm.response.json(); if (r?.data?.id) pm.environment.set('userId', r.data.id);"] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"fullName\": \"Staff New\",\n  \"email\": \"staffnew@example.com\",\n  \"password\": \"Password123!\",\n  \"role\": \"staff\"\n}" },
+            "url": "{{baseUrl}}/api/users"
+          }
+        },
+        {
+          "name": "PATCH /api/users/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"fullName\": \"Staff New Updated\",\n  \"role\": \"staff\"\n}" },
+            "url": "{{baseUrl}}/api/users/{{userId}}"
+          }
+        },
+        {
+          "name": "PATCH /api/users/:id/status",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"active\"\n}" },
+            "url": "{{baseUrl}}/api/users/{{userId}}/status"
+          }
+        },
+        { "name": "DELETE /api/users/:id", "request": { "method": "DELETE", "url": "{{baseUrl}}/api/users/{{userId}}" } }
+      ]
+    },
+    {
+      "name": "04 - Addresses",
+      "item": [
+        { "name": "GET /api/addresses", "request": { "method": "GET", "url": "{{baseUrl}}/api/addresses" } },
+        {
+          "name": "POST /api/addresses",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const r = pm.response.json(); if (r?.data?.id) pm.environment.set('addressId', r.data.id);"] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"receiverName\": \"Customer User\",\n  \"receiverPhone\": \"0901000003\",\n  \"province\": \"TP Hồ Chí Minh\",\n  \"district\": \"Quận 1\",\n  \"ward\": \"Phường Bến Nghé\",\n  \"detailAddress\": \"123 Lê Lợi\",\n  \"isDefault\": true\n}" },
+            "url": "{{baseUrl}}/api/addresses"
+          }
+        },
+        {
+          "name": "PATCH /api/addresses/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"detailAddress\": \"124 Lê Lợi\"\n}" },
+            "url": "{{baseUrl}}/api/addresses/{{addressId}}"
+          }
+        },
+        { "name": "DELETE /api/addresses/:id", "request": { "method": "DELETE", "url": "{{baseUrl}}/api/addresses/{{addressId}}" } }
+      ]
+    },
+    {
+      "name": "05 - Categories",
+      "item": [
+        { "name": "GET /api/categories", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{baseUrl}}/api/categories?page=1&limit=20" } },
+        { "name": "GET /api/categories/:id", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{baseUrl}}/api/categories/{{categoryId}}" } },
+        {
+          "name": "POST /api/categories",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const r = pm.response.json(); if (r?.data?.id) pm.environment.set('categoryId', r.data.id);"] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Kỹ năng\",\n  \"slug\": \"ky-nang\",\n  \"description\": \"Sách kỹ năng\",\n  \"parentId\": null,\n  \"status\": true\n}" },
+            "url": "{{baseUrl}}/api/categories"
+          }
+        },
+        {
+          "name": "PATCH /api/categories/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Kỹ năng sống\",\n  \"status\": true\n}" },
+            "url": "{{baseUrl}}/api/categories/{{categoryId}}"
+          }
+        },
+        { "name": "DELETE /api/categories/:id", "request": { "method": "DELETE", "url": "{{baseUrl}}/api/categories/{{categoryId}}" } }
+      ]
+    },
+    {
+      "name": "06 - Authors",
+      "item": [
+        { "name": "GET /api/authors", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{baseUrl}}/api/authors?page=1&limit=20" } },
+        { "name": "GET /api/authors/:id", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{baseUrl}}/api/authors/{{authorId}}" } },
+        {
+          "name": "POST /api/authors",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const r = pm.response.json(); if (r?.data?.id) pm.environment.set('authorId', r.data.id);"] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Author A\",\n  \"bio\": \"Bio\",\n  \"status\": true\n}" },
+            "url": "{{baseUrl}}/api/authors"
+          }
+        },
+        {
+          "name": "PATCH /api/authors/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"bio\": \"Updated bio\"\n}" },
+            "url": "{{baseUrl}}/api/authors/{{authorId}}"
+          }
+        },
+        { "name": "DELETE /api/authors/:id", "request": { "method": "DELETE", "url": "{{baseUrl}}/api/authors/{{authorId}}" } },
+        {
+          "name": "POST /api/authors/:id/avatar",
+          "request": {
+            "method": "POST",
+            "body": { "mode": "formdata", "formdata": [{ "key": "avatar", "type": "file", "src": "" }] },
+            "url": "{{baseUrl}}/api/authors/{{authorId}}/avatar"
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 - Publishers",
+      "item": [
+        { "name": "GET /api/publishers", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{baseUrl}}/api/publishers?page=1&limit=20" } },
+        { "name": "GET /api/publishers/:id", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{baseUrl}}/api/publishers/{{publisherId}}" } },
+        {
+          "name": "POST /api/publishers",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const r = pm.response.json(); if (r?.data?.id) pm.environment.set('publisherId', r.data.id);"] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"NXB Test\",\n  \"address\": \"HCM\",\n  \"phone\": \"0281234567\",\n  \"email\": \"nxb@example.com\",\n  \"status\": true\n}" },
+            "url": "{{baseUrl}}/api/publishers"
+          }
+        },
+        {
+          "name": "PATCH /api/publishers/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"address\": \"TP.HCM\"\n}" },
+            "url": "{{baseUrl}}/api/publishers/{{publisherId}}"
+          }
+        },
+        { "name": "DELETE /api/publishers/:id", "request": { "method": "DELETE", "url": "{{baseUrl}}/api/publishers/{{publisherId}}" } }
+      ]
+    },
+    {
+      "name": "08 - Books",
+      "item": [
+        { "name": "GET /api/books", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{baseUrl}}/api/books?page=1&limit=12" } },
+        { "name": "GET /api/books/:id", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{baseUrl}}/api/books/{{bookId}}" } },
+        { "name": "GET /api/books/:id/related", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{baseUrl}}/api/books/{{bookId}}/related?limit=4" } },
+        {
+          "name": "POST /api/books",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const r = pm.response.json(); if (r?.data?.id) pm.environment.set('bookId', r.data.id);"] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Book Test\",\n  \"slug\": \"book-test-001\",\n  \"isbn\": \"9786040000000\",\n  \"description\": \"Book description\",\n  \"publicationYear\": 2026,\n  \"pageCount\": 250,\n  \"price\": 120000,\n  \"importPrice\": 70000,\n  \"stockQuantity\": 20,\n  \"categoryId\": \"{{categoryId}}\",\n  \"authorId\": \"{{authorId}}\",\n  \"publisherId\": \"{{publisherId}}\",\n  \"status\": \"active\",\n  \"isFeatured\": false,\n  \"isNew\": true,\n  \"isBestSeller\": false\n}"
+            },
+            "url": "{{baseUrl}}/api/books"
+          }
+        },
+        {
+          "name": "PATCH /api/books/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"price\": 115000,\n  \"isFeatured\": true\n}" },
+            "url": "{{baseUrl}}/api/books/{{bookId}}"
+          }
+        },
+        { "name": "DELETE /api/books/:id", "request": { "method": "DELETE", "url": "{{baseUrl}}/api/books/{{bookId}}" } },
+        {
+          "name": "POST /api/books/:id/cover",
+          "request": {
+            "method": "POST",
+            "body": { "mode": "formdata", "formdata": [{ "key": "cover", "type": "file", "src": "" }] },
+            "url": "{{baseUrl}}/api/books/{{bookId}}/cover"
+          }
+        },
+        {
+          "name": "POST /api/books/:id/images",
+          "request": {
+            "method": "POST",
+            "body": { "mode": "formdata", "formdata": [{ "key": "images", "type": "file", "src": "" }] },
+            "url": "{{baseUrl}}/api/books/{{bookId}}/images"
+          }
+        },
+        { "name": "DELETE /api/books/:id/images/:imageId", "request": { "method": "DELETE", "url": "{{baseUrl}}/api/books/{{bookId}}/images/{{bookImageId}}" } }
+      ]
+    },
+    {
+      "name": "09 - Banners",
+      "item": [
+        { "name": "GET /api/banners", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{baseUrl}}/api/banners" } },
+        { "name": "GET /api/banners/all", "request": { "method": "GET", "url": "{{baseUrl}}/api/banners/all" } },
+        {
+          "name": "POST /api/banners",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const r = pm.response.json(); if (r?.data?.id) pm.environment.set('bannerId', r.data.id);"] } }],
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "title", "value": "Banner Test", "type": "text" },
+                { "key": "link", "value": "https://example.com", "type": "text" },
+                { "key": "status", "value": "true", "type": "text" },
+                { "key": "sortOrder", "value": "1", "type": "text" },
+                { "key": "startDate", "value": "2026-04-01T00:00:00.000Z", "type": "text" },
+                { "key": "endDate", "value": "2026-12-31T23:59:59.000Z", "type": "text" },
+                { "key": "image", "type": "file", "src": "" }
+              ]
+            },
+            "url": "{{baseUrl}}/api/banners"
+          }
+        },
+        {
+          "name": "PATCH /api/banners/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Banner Updated\",\n  \"sortOrder\": 2\n}" },
+            "url": "{{baseUrl}}/api/banners/{{bannerId}}"
+          }
+        },
+        { "name": "DELETE /api/banners/:id", "request": { "method": "DELETE", "url": "{{baseUrl}}/api/banners/{{bannerId}}" } }
+      ]
+    },
+    {
+      "name": "10 - Cart",
+      "item": [
+        { "name": "GET /api/cart", "request": { "method": "GET", "url": "{{baseUrl}}/api/cart" } },
+        {
+          "name": "POST /api/cart/items",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const r = pm.response.json(); const item = r?.data?.items?.[0]; if (item?.id) pm.environment.set('cartItemId', item.id);"] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"bookId\": \"{{bookId}}\",\n  \"quantity\": 1\n}" },
+            "url": "{{baseUrl}}/api/cart/items"
+          }
+        },
+        {
+          "name": "PATCH /api/cart/items/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"quantity\": 2,\n  \"selected\": true\n}" },
+            "url": "{{baseUrl}}/api/cart/items/{{cartItemId}}"
+          }
+        },
+        { "name": "DELETE /api/cart/items/:id", "request": { "method": "DELETE", "url": "{{baseUrl}}/api/cart/items/{{cartItemId}}" } }
+      ]
+    },
+    {
+      "name": "11 - Wishlist",
+      "item": [
+        { "name": "GET /api/wishlist", "request": { "method": "GET", "url": "{{baseUrl}}/api/wishlist?page=1&limit=20" } },
+        { "name": "POST /api/wishlist/:bookId", "request": { "method": "POST", "url": "{{baseUrl}}/api/wishlist/{{bookId}}" } },
+        { "name": "DELETE /api/wishlist/:bookId", "request": { "method": "DELETE", "url": "{{baseUrl}}/api/wishlist/{{bookId}}" } }
+      ]
+    },
+    {
+      "name": "12 - Vouchers",
+      "item": [
+        {
+          "name": "POST /api/vouchers/validate",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"WELCOME10\",\n  \"orderSubtotal\": 200000\n}" },
+            "url": "{{baseUrl}}/api/vouchers/validate"
+          }
+        },
+        { "name": "GET /api/vouchers", "request": { "method": "GET", "url": "{{baseUrl}}/api/vouchers?page=1&limit=20" } },
+        { "name": "GET /api/vouchers/:id", "request": { "method": "GET", "url": "{{baseUrl}}/api/vouchers/{{voucherId}}" } },
+        {
+          "name": "POST /api/vouchers",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const r = pm.response.json(); if (r?.data?.id) pm.environment.set('voucherId', r.data.id);"] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"WELCOME10\",\n  \"type\": \"percent\",\n  \"value\": 10,\n  \"minOrderValue\": 100000,\n  \"maxDiscountValue\": 50000,\n  \"startDate\": \"2026-01-01T00:00:00.000Z\",\n  \"endDate\": \"2026-12-31T23:59:59.000Z\",\n  \"usageLimit\": 100,\n  \"status\": true\n}" },
+            "url": "{{baseUrl}}/api/vouchers"
+          }
+        },
+        {
+          "name": "PATCH /api/vouchers/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": true\n}" },
+            "url": "{{baseUrl}}/api/vouchers/{{voucherId}}"
+          }
+        },
+        { "name": "DELETE /api/vouchers/:id", "request": { "method": "DELETE", "url": "{{baseUrl}}/api/vouchers/{{voucherId}}" } }
+      ]
+    },
+    {
+      "name": "13 - Orders",
+      "item": [
+        {
+          "name": "POST /api/orders",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const r = pm.response.json(); if (r?.data?.id) pm.environment.set('orderId', r.data.id); if (r?.data?.orderCode) pm.environment.set('orderCode', r.data.orderCode);"] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"addressId\": \"{{addressId}}\",\n  \"paymentMethod\": \"cod\",\n  \"voucherCode\": \"WELCOME10\",\n  \"note\": \"Giao giờ hành chính\",\n  \"cartItemIds\": [\"{{cartItemId}}\"]\n}" },
+            "url": "{{baseUrl}}/api/orders"
+          }
+        },
+        { "name": "GET /api/orders/me", "request": { "method": "GET", "url": "{{baseUrl}}/api/orders/me?page=1&limit=20" } },
+        { "name": "GET /api/orders/me/:id", "request": { "method": "GET", "url": "{{baseUrl}}/api/orders/me/{{orderId}}" } },
+        {
+          "name": "PATCH /api/orders/me/:id/cancel",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"cancelledReason\": \"Đổi nhu cầu\"\n}" },
+            "url": "{{baseUrl}}/api/orders/me/{{orderId}}/cancel"
+          }
+        },
+        { "name": "GET /api/orders", "request": { "method": "GET", "url": "{{baseUrl}}/api/orders?page=1&limit=20" } },
+        { "name": "GET /api/orders/:id", "request": { "method": "GET", "url": "{{baseUrl}}/api/orders/{{orderId}}" } },
+        {
+          "name": "PATCH /api/orders/:id/status",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"orderStatus\": \"confirmed\"\n}" },
+            "url": "{{baseUrl}}/api/orders/{{orderId}}/status"
+          }
+        },
+        { "name": "GET /api/orders/:id/invoice", "request": { "method": "GET", "url": "{{baseUrl}}/api/orders/{{orderId}}/invoice" } },
+        { "name": "GET /api/orders/:id/delivery-note", "request": { "method": "GET", "url": "{{baseUrl}}/api/orders/{{orderId}}/delivery-note" } }
+      ]
+    },
+    {
+      "name": "14 - Payments",
+      "item": [
+        { "name": "GET /api/payments/:orderId", "request": { "method": "GET", "url": "{{baseUrl}}/api/payments/{{orderId}}" } },
+        {
+          "name": "POST /api/payments/webhook",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "x-webhook-secret", "value": "{{paymentWebhookSecret}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"orderCode\": \"{{orderCode}}\",\n  \"transactionCode\": \"TX-001\",\n  \"amount\": 125000,\n  \"status\": \"paid\"\n}" },
+            "url": "{{baseUrl}}/api/payments/webhook"
+          }
+        }
+      ]
+    },
+    {
+      "name": "15 - Reviews",
+      "item": [
+        { "name": "GET /api/reviews/:bookId", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{baseUrl}}/api/reviews/{{bookId}}?page=1&limit=20" } },
+        { "name": "GET /api/books/:bookId/reviews", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{baseUrl}}/api/books/{{bookId}}/reviews?page=1&limit=20" } },
+        {
+          "name": "POST /api/reviews",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const r = pm.response.json(); if (r?.data?.id) pm.environment.set('reviewId', r.data.id);"] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"bookId\": \"{{bookId}}\",\n  \"orderId\": \"{{orderId}}\",\n  \"rating\": 5,\n  \"comment\": \"Rất hay\"\n}" },
+            "url": "{{baseUrl}}/api/reviews"
+          }
+        },
+        {
+          "name": "POST /api/books/:bookId/reviews",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"rating\": 5,\n  \"comment\": \"Rất hay\"\n}" },
+            "url": "{{baseUrl}}/api/books/{{bookId}}/reviews"
+          }
+        },
+        {
+          "name": "PATCH /api/reviews/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"rating\": 4\n}" },
+            "url": "{{baseUrl}}/api/reviews/{{reviewId}}"
+          }
+        },
+        { "name": "DELETE /api/reviews/:id", "request": { "method": "DELETE", "url": "{{baseUrl}}/api/reviews/{{reviewId}}" } }
+      ]
+    },
+    {
+      "name": "16 - Contacts",
+      "item": [
+        {
+          "name": "POST /api/contacts (public)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const r = pm.response.json(); if (r?.data?.id) pm.environment.set('contactId', r.data.id);"] } }],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"customerName\": \"Nguyen Van A\",\n  \"email\": \"a@example.com\",\n  \"phone\": \"0901234567\",\n  \"subject\": \"Hỏi về đơn hàng\",\n  \"content\": \"Cho mình hỏi thời gian giao.\"\n}" },
+            "url": "{{baseUrl}}/api/contacts"
+          }
+        },
+        { "name": "GET /api/contacts", "request": { "method": "GET", "url": "{{baseUrl}}/api/contacts?page=1&limit=20" } },
+        { "name": "GET /api/contacts/:id", "request": { "method": "GET", "url": "{{baseUrl}}/api/contacts/{{contactId}}" } },
+        {
+          "name": "PATCH /api/contacts/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"in_progress\",\n  \"note\": \"Đã liên hệ khách\"\n}" },
+            "url": "{{baseUrl}}/api/contacts/{{contactId}}"
+          }
+        },
+        { "name": "DELETE /api/contacts/:id", "request": { "method": "DELETE", "url": "{{baseUrl}}/api/contacts/{{contactId}}" } }
+      ]
+    },
+    {
+      "name": "17 - Inventory",
+      "item": [
+        { "name": "GET /api/inventory", "request": { "method": "GET", "url": "{{baseUrl}}/api/inventory?page=1&limit=20" } },
+        { "name": "GET /api/inventory/transactions", "request": { "method": "GET", "url": "{{baseUrl}}/api/inventory/transactions?page=1&limit=20" } },
+        {
+          "name": "POST /api/inventory",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"bookId\": \"{{bookId}}\",\n  \"type\": \"import\",\n  \"quantity\": 10,\n  \"unitCost\": 50000,\n  \"note\": \"Nhập kho\"\n}" },
+            "url": "{{baseUrl}}/api/inventory"
+          }
+        },
+        {
+          "name": "POST /api/inventory/import",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"bookId\": \"{{bookId}}\",\n  \"quantity\": 10\n}" },
+            "url": "{{baseUrl}}/api/inventory/import"
+          }
+        },
+        {
+          "name": "POST /api/inventory/export",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"bookId\": \"{{bookId}}\",\n  \"quantity\": 2\n}" },
+            "url": "{{baseUrl}}/api/inventory/export"
+          }
+        },
+        {
+          "name": "POST /api/inventory/adjustment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"bookId\": \"{{bookId}}\",\n  \"quantity\": -1,\n  \"note\": \"Kiểm kê\"\n}" },
+            "url": "{{baseUrl}}/api/inventory/adjustment"
+          }
+        }
+      ]
+    },
+    {
+      "name": "18 - Reports",
+      "item": [
+        { "name": "GET /api/reports/dashboard", "request": { "method": "GET", "url": "{{baseUrl}}/api/reports/dashboard" } },
+        { "name": "GET /api/reports/revenue", "request": { "method": "GET", "url": "{{baseUrl}}/api/reports/revenue?from=2026-01-01&to=2026-12-31" } },
+        { "name": "GET /api/reports/best-sellers", "request": { "method": "GET", "url": "{{baseUrl}}/api/reports/best-sellers?limit=10" } },
+        { "name": "GET /api/reports/inventory", "request": { "method": "GET", "url": "{{baseUrl}}/api/reports/inventory" } },
+        { "name": "GET /api/reports/cancelled", "request": { "method": "GET", "url": "{{baseUrl}}/api/reports/cancelled?from=2026-01-01&to=2026-12-31" } },
+        { "name": "GET /api/reports/top-customers", "request": { "method": "GET", "url": "{{baseUrl}}/api/reports/top-customers?limit=10" } }
+      ]
+    },
+    {
+      "name": "19 - Activity Logs",
+      "item": [
+        { "name": "GET /api/activity-logs", "request": { "method": "GET", "url": "{{baseUrl}}/api/activity-logs?page=1&limit=20" } }
+      ]
+    }
+  ]
+}
