@@ -5,12 +5,14 @@ import { describe, expect, test, vi } from 'vitest';
 const controllerMock = vi.hoisted(() => ({
   cancelMine: vi.fn(),
   create: vi.fn(),
+  createManual: vi.fn(),
   downloadDeliveryNote: vi.fn(),
   downloadInvoice: vi.fn(),
   getById: vi.fn(),
   getMine: vi.fn(),
   listAll: vi.fn(),
   listMine: vi.fn(),
+  updateOps: vi.fn(),
   updateStatus: vi.fn(),
 }));
 
