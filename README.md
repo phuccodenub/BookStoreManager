@@ -1,5 +1,9 @@
 # BookStoreManager Backend
 
+![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![Node](https://img.shields.io/badge/node-%3E%3D22.0.0-brightgreen.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+
 Backend-only service for BookStoreManager, built with Express 5, TypeScript, Prisma, PostgreSQL, JWT auth, Socket.IO, and Zod.
 
 ## Features
